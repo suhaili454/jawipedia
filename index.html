@@ -48,6 +48,16 @@
         .word-hijau { color: #16a34a; font-weight: 700; cursor: pointer; border-bottom: 2px solid #86efac; transition: all 0.2s; }
         .word-hijau:hover { background-color: #f0fdf4; }
 
+        .word-kuning { color: #d97706; font-weight: 600; cursor: pointer; border-bottom: 2px dotted #f59e0b; transition: all 0.2s; }
+        .word-kuning:hover { background-color: #fffbeb; }
+
+        /* PINK : 2 pilihan sebaris  [ejaan sebenar] / [ejaan literal] dengan label kecil di atas */
+        .word-pink { color: #db2777; font-weight: 700; border-bottom: 2px dashed #f9a8d4; white-space: nowrap; }
+        .pink-opt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: bottom; padding: 0 3px; border-radius: 8px; cursor: pointer; transition: background .15s; }
+        .pink-opt:hover { background-color: #fdf2f8; }
+        .pink-lbl { font: 600 .55rem/1.2 'Poppins', sans-serif; direction: ltr; color: #be185d; letter-spacing: .02em; white-space: nowrap; }
+        .pink-sep { color: #94a3b8; font-weight: 400; padding: 0 5px; }
+
         .word-merah { color: #ef4444; font-weight: 600; cursor: pointer; border-bottom: 2px dashed #fca5a5; transition: all 0.2s; }
         .word-merah:hover { background-color: #fef2f2; }
         
@@ -131,13 +141,18 @@
             </div>
 
             <!-- PETUNJUK WARNA -->
-            <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium grid grid-cols-2 md:grid-cols-3 gap-3 justify-center text-slate-600">
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-slate-800"></div> Asal (Hitam)</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-blue-600"></div> Baru (Biru)</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-orange-500"></div> Baiki Asal (Oren)</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-purple-600"></div> Baiki Semula (Ungu)</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div> Lulus (Hijau)</div>
-                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500 border border-red-200"></div> Tiada Ejaan (Merah)</div>
+            <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-600">
+                <div class="font-bold text-slate-700 mb-2">Maksud warna</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-slate-800"></div><div><b>Hitam</b>: Ejaan asal daripada kamus.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-green-500"></div><div><b>Hijau</b>: Sudah lulus undian atau sudah disahkan. Boleh dipercayai.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-blue-600"></div><div><b>Biru</b>: Ejaan baharu sumbangan pengguna, sedang menunggu undian.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-orange-500"></div><div><b>Oren</b>: Baikan ke atas ejaan asal, sedang menunggu undian.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-purple-600"></div><div><b>Ungu</b>: Baikan semula selepas ejaan sebelumnya ditolak.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 " style="background:#d97706"></div><div><b>Kuning</b>: Ejaan DITEKA enjin ikut hukum (KT12, DARLUNG, 3 suku kata, imbuhan). Belum disahkan, sila semak sendiri dan klik untuk membetulkan.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 " style="background:#db2777"></div><div><b>Pink</b>: Enjin tak pasti (nama Arab, singkatan, ejaan Inggeris, typo). Dua pilihan: klik satu, terus disahkan.</div></div>
+                    <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-red-500 border border-red-200"></div><div><b>Merah</b>: Tiada ejaan. Klik untuk menyumbang ejaan.</div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -154,6 +169,8 @@
                 <input type="text" id="modalRumi" class="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl outline-none font-semibold text-slate-600" readonly>
             </div>
             
+            <div id="ruangPilihan" class="mb-4 hidden space-y-2"></div>
+
             <div id="ruangEjaanLama" class="mb-4 hidden">
                 <label class="block text-slate-700 text-xs font-semibold mb-1 ml-1 text-slate-400">Ejaan Semasa</label>
                 <div id="modalJawiLama" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-jawi text-xl text-slate-500" dir="rtl"></div>
@@ -197,6 +214,10 @@
     <!-- PANGKALAN DATA (Mesti pastikan fail wujud) -->
     <script src="kamus_2.js"></script>
     <script src="kamus_tambahan.js"></script>
+    <!-- ENJIN HUKUM (fallback untuk perkataan tiada dalam kamus) -->
+    <script src="hukum_jawi.js"></script>
+    <script src="enjin_jawi.js"></script>
+    <script src="cadang_arab.js"></script>
 
     <script>
         // 1. SETUP FIREBASE
@@ -217,6 +238,20 @@
         let currentSelectedRumi = '';
         let currentSelectedJawi = '';
         let currentSelectedType = '';
+        let cadanganList = [];
+        let modalLangsung = false, currentCadangan = null;   // pilihan PINK terus disahkan (tanpa undian)
+        const FRASA_RE = /^([Aa]\/[LlPp]|[Yy]\.\s?Bhg\.?)$/;
+        const kunciFb = cd => String(cd.kunci || cd.rumi).replace(/[.#$\[\]\/]/g, '_');   // kunci Firebase tak boleh ada . # $ [ ] /
+
+        // Paparan 2 pilihan sebaris [ejaan sebenar] / [ejaan literal]. Jika pengguna dah pilih sebelum ini -> HIJAU terus.
+        function paparCadangan(cd) {
+            const ap = (typeof dataApproved !== 'undefined') ? dataApproved[kunciFb(cd)] : null;
+            if (ap) return `<span class="word-hijau" onclick="pilihTeks(event, '${kunciFb(cd)}', '${ap.jawi}', 'hijau')">${ap.jawi}</span>`;
+            const idx = cadanganList.push(cd) - 1;
+            return '<span class="word-pink">' + cd.pilihan.map((p, k) =>
+                `<span class="pink-opt" onclick="bukaPilihan(event, ${idx}, ${k})" title="${p.nota.replace(/"/g, '')}"><span class="pink-lbl">${p.label}</span><span>${p.jawi}</span></span>`
+            ).join('<span class="pink-sep">/</span>') + '</span>';
+        }
 
         // Penapis Typo / Shortform Unik 
         const aliasRumi = {
@@ -251,18 +286,51 @@
             if (!text.trim()) { document.getElementById('jawiOutput').innerHTML = ''; return; }
 
             // Memisahkan perkataan tetapi mengekalkan ruang/tanda baca
-            const tokens = text.split(/([a-zA-Z0-9\-']+)/);
+            const tokens = text.split(/([Aa]\/[LlPp](?![a-zA-Z])|[Yy]\.\s?Bhg(?![a-zA-Z])\.?|[a-zA-Z0-9\-']+)/);
             let hasil = [];
+            cadanganList = [];
             let i = 0;
+
+            const cariDlmKamus = w => { const d = semakKamusPrioriti(w); return d ? d.jawi : null; };
+            // Cadangan 2 pilihan (PINK). mode 'awal' = sebelum kamus (hanya singkatan gelaran & Abd+nama); 'penuh' = juga nama & typo
+            function cadangDi(i, mode) {
+                if (typeof EnjinJawi === 'undefined' || !EnjinJawi.cadang) return null;
+                const token = tokens[i]; if (!/^[a-zA-Z']+$/.test(token)) return null;
+                const lower = token.toLowerCase(), besar = /^[A-Z]/.test(token);
+                const sep = tokens[i + 1] || '';                      // pemisah selepas perkataan, cth ". " atau " " atau ","
+                const titik = sep.charAt(0) === '.';
+                const opt = { besar: besar, titik: titik, cariAsas: cariDlmKamus };
+                const nx = (/^\.? $/.test(sep) && tokens[i + 2] && /^[a-zA-Z'\-]+$/.test(tokens[i + 2])) ? i + 2 : -1;
+                let cd = null, akhir = i + 1;
+                try {
+                    if (nx >= 0) { cd = EnjinJawi.cadang([lower, tokens[nx].toLowerCase()], opt); if (cd) akhir = nx + 1; }
+                    if (!cd) { cd = EnjinJawi.cadang([lower], opt); if (cd) akhir = i + 1; }
+                    if (!cd && mode === 'penuh' && EnjinJawi.cadangInggeris) { cd = EnjinJawi.cadangInggeris(lower, cariDlmKamus, opt); akhir = i + 1; }
+                    if (!cd && mode === 'penuh' && !besar && !EnjinJawi.kelihatanInggeris(lower) && EnjinJawi.cadangTypo) { cd = EnjinJawi.cadangTypo(lower, cariDlmKamus); akhir = i + 1; }
+                } catch (e) { cd = null; }
+                if (!cd) return null;
+                if (mode === 'awal' && !(cd.jenis === 'singkatan' || (cd.jenis === 'nama' && lower === 'abd'))) return null;
+                // singkatan berpenutup titik (Hj. Dr. Mohd.) : titik ditelan, ruang selepasnya dikekalkan
+                if (cd.jenis === 'singkatan' && titik && akhir === i + 1) tokens[i + 1] = sep.slice(1);
+                const html = paparCadangan(cd);
+                return { html: html, akhir: akhir };
+            }
 
             while (i < tokens.length) {
                 let token = tokens[i];
                 // Jika bukan perkataan (ruang, koma, dsb), terus masukkan
+                if (FRASA_RE.test(token) && typeof EnjinJawi !== 'undefined' && EnjinJawi.cadangFrasa) {
+                    const fr = EnjinJawi.cadangFrasa(token, { cariAsas: cariDlmKamus });
+                    if (fr) { hasil.push(paparCadangan(fr)); i++; continue; }
+                }
                 if (!token || !/^[a-zA-Z0-9\-']+$/.test(token)) {
-                    if(token) hasil.push(token.replace(/
-/g, '<br>'));
+                    if(token) hasil.push(token.replace(/\n/g, '<br>'));
                     i++; continue;
                 }
+
+                // PINK awal: singkatan gelaran/nama (Mohd, Abd, Hj., Dr., Tgku...) diutamakan sebelum kamus & shortform chat
+                const awal = cadangDi(i, 'awal');
+                if (awal) { hasil.push(awal.html); i = awal.akhir; continue; }
 
                 // Cari gabungan 3 patah, 2 patah, 1 patah (N-Gram)
                 let matchFound = false;
@@ -307,6 +375,20 @@
                 if (!matchFound) {
                     let tokenLower = token.toLowerCase();
                     let normalized = (typeof kamusShortform !== 'undefined' && kamusShortform[tokenLower]) ? kamusShortform[tokenLower] : tokenLower;
+                    // FALLBACK ENJIN HUKUM : (1) akar+imbuhan dalam kamus  (2) PINK 2 pilihan: nama Arab / typo  (3) KUNING teka hukum
+                    let teka = null;
+                    const singkatanTakDikenali = (normalized === tokenLower) && ((typeof EnjinJawi !== 'undefined' && EnjinJawi.kelihatanInggeris && EnjinJawi.kelihatanInggeris(tokenLower)) || /[A-Z].*[A-Z]/.test(token) || token.length < 2 || !/[aeiou]/.test(tokenLower));
+                    if (typeof EnjinJawi !== 'undefined' && !singkatanTakDikenali && /^[a-z]+$/.test(normalized)) {
+                        try { teka = EnjinJawi.eja(normalized, { imbuhan: true, cariAsas: cariDlmKamus }); } catch (e) { teka = null; }
+                    }
+                    if (!(teka && teka.sumber === 'kamus+imbuhan')) {
+                        const pk = cadangDi(i, 'penuh');
+                        if (pk) { hasil.push(pk.html); i = pk.akhir; continue; }
+                    }
+                    if (teka && teka.jawi) {
+                        hasil.push(`<span class="word-kuning" onclick="pilihTeks(event, '${normalized}', '${teka.jawi}', 'merah')" title="Diteka ikut hukum: ${teka.terangan.join('; ').replace(/"/g, '')}">${teka.jawi}</span>`);
+                        i++; continue;
+                    }
                     hasil.push(`<span class="word-merah" onclick="pilihTeks(event, '${normalized}', '', 'merah')" title="Klik untuk tambah ejaan">${token}</span>`);
                     i++;
                 }
@@ -348,13 +430,36 @@
         function tutupTooltip() { document.getElementById('actionTooltip').classList.add('hidden'); }
         window.onclick = function(e) { tutupTooltip(); if(e.target.classList.contains('modal')) e.target.classList.remove('active'); }
 
+        // PINK : enjin beri pilihan ejaan (sebenar / literal), pengguna yang putuskan
+        function bukaPilihan(event, idx, pilih) {
+            event.stopPropagation();
+            const c = cadanganList[idx]; if (!c) return;
+            pilih = pilih || 0;
+            currentSelectedRumi = c.rumi; currentSelectedJawi = ''; currentSelectedType = 'merah';
+            jalankanFungsiTooltip();
+            document.getElementById('modalTitle').innerHTML = '🎀 Pilih Ejaan';
+            document.getElementById('modalJawiBaru').value = c.pilihan[pilih].jawi;
+            modalLangsung = true; currentCadangan = c;
+            const box = document.getElementById('ruangPilihan');
+            box.innerHTML = '<div class="text-xs text-pink-700 font-semibold">Pilihan anda terus disahkan (tanpa undian)</div>' + c.pilihan.map((p, k) => `
+                <button type="button" onclick="document.getElementById('modalJawiBaru').value = cadanganList[${idx}].pilihan[${k}].jawi"
+                        class="w-full text-left p-3 rounded-xl border border-pink-200 bg-pink-50 hover:bg-pink-100 transition-all">
+                    <div class="text-xs font-semibold text-pink-700">${p.label}</div>
+                    <div class="font-jawi text-2xl text-slate-800" dir="rtl" style="line-height:1.8">${p.jawi}</div>
+                    <div class="text-xs text-slate-500">${p.nota}</div>
+                </button>`).join('');
+            box.classList.remove('hidden');
+        }
+
         function jalankanFungsiTooltip() {
+            document.getElementById('ruangPilihan').classList.add('hidden');
+            modalLangsung = false; currentCadangan = null;
             const rumi = currentSelectedRumi;
             const type = currentSelectedType;
             
             document.getElementById('modalTindakan').classList.add('active');
             document.getElementById('modalRumi').value = rumi;
-            document.getElementById('modalJawiBaru').value = '';
+            document.getElementById('modalJawiBaru').value = (type === 'merah') ? (currentSelectedJawi || '') : '';
             
             const divLama = document.getElementById('ruangEjaanLama');
             
@@ -380,6 +485,16 @@
             if(!jawiBaru) { alert('Sila masukkan ejaan Jawi.'); return; }
             if(document.getElementById('ruangEjaanLama').classList.contains('hidden') === false) {
                 if(jawiBaru === document.getElementById('modalJawiLama').textContent) { alert('Ejaan mesti berbeza.'); return; }
+            }
+
+            if (modalLangsung && currentCadangan) {
+                // PILIHAN PENGGUNA menggantikan undian : terus ke Approved (Hijau), buang draf pending jika ada
+                const kunci = kunciFb(currentCadangan);
+                db.ref('approved/' + kunci).set({ jawi: jawiBaru, timestamp: Date.now(), sumber: 'pilihan-pengguna' })
+                  .then(() => db.ref('pending/' + kunci).remove())
+                  .then(() => { tutupModal('modalTindakan'); alert(`✅ Disimpan! Ejaan "${rumi}" kini disahkan terus.`); })
+                  .catch(() => alert("Ralat database."));
+                return;
             }
 
             db.ref('pending/' + rumi).set({
