@@ -259,7 +259,7 @@
         // 2. ENJIN N-GRAM & SHORTFORM
         function prosesRumiKeJawi() {
             const text = document.getElementById('rumiInput').value;
-            if (!text.trim()) { document.getElementById('jawiOutput').innerHTML = ''; return; }
+            if (!text.trim()) { const o = document.getElementById('jawiOutput'); o.innerHTML = ''; o.dataset.html = ''; return; }
 
             // Memisahkan perkataan tetapi mengekalkan ruang/tanda baca
             const tokens = text.split(/([Aa]\/[LlPp](?![a-zA-Z])|[Yy]\.\s?Bhg(?![a-zA-Z])\.?|[a-zA-Z0-9\-']+)/);
@@ -369,7 +369,9 @@
                     i++;
                 }
             }
-            document.getElementById('jawiOutput').innerHTML = hasil.join('');
+            const htmlBaru = hasil.join('');
+            const out = document.getElementById('jawiOutput');
+            if (out.dataset.html !== htmlBaru) { out.innerHTML = htmlBaru; out.dataset.html = htmlBaru; }   // jangan bina semula jika tiada perubahan (elak elemen diganti ketika diklik)
         }
 
         function semakKamusPrioriti(word) {
@@ -388,29 +390,13 @@
         function pilihTeks(event, rumi, jawi, type) {
             event.stopPropagation();
             currentSelectedRumi = rumi; currentSelectedJawi = jawi; currentSelectedType = type;
-            
-            const tooltip = document.getElementById('actionTooltip');
-            document.getElementById('tooltipWord').textContent = `"${rumi.toUpperCase()}"`;
-            const btn = document.getElementById('btnTooltipBaiki');
-
-            if (type === 'kuning') { btn.innerHTML = "🔍 SEMAK / SAHKAN EJAAN"; btn.className = "bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
-            else if (type === 'merah') { btn.innerHTML = "➕ TAMBAH EJAAN"; btn.className = "bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
-            else if (type === 'hitam') { btn.innerHTML = "🔧 SEMAK / BAIKI EJAAN"; btn.className = "bg-orange-500 hover:bg-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
-            else { btn.innerHTML = "🔧 SEMAK / BAIKI"; btn.className = "bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
-
-            // kedudukan relatif kepada bekas popup (offsetParent), bukan halaman : supaya betul walau di mana pun perkataan berada
-            const rect = event.currentTarget.getBoundingClientRect();
-            const par = tooltip.offsetParent || document.body, pr = par.getBoundingClientRect();
-            tooltip.classList.remove('hidden');
-            const half = tooltip.offsetWidth / 2, maxL = Math.max(half, par.clientWidth - half);
-            let left = rect.left - pr.left + (rect.width / 2);
-            left = Math.min(Math.max(left, half), maxL);                 // jangan terkeluar skrin kiri/kanan
-            tooltip.style.left = `${left}px`;
-            tooltip.style.top = `${rect.bottom - pr.top + 8}px`;
+            tutupTooltip();
+            jalankanFungsiTooltip();      // terus buka kotak penuh (tambah / semak / baiki), tanpa popup kecil
         }
 
         function tutupTooltip() { document.getElementById('actionTooltip').classList.add('hidden'); }
-        window.onclick = function(e) { tutupTooltip(); if(e.target.classList.contains('modal')) e.target.classList.remove('active'); }
+        let _tooltipDibuka = 0;   // masa popup dibuka : klik susulan serta-merta (cth klik berganda/dihantar semula) tak menutupnya
+        window.onclick = function(e) { if (Date.now() - _tooltipDibuka > 350) tutupTooltip(); if(e.target.classList.contains('modal')) e.target.classList.remove('active'); }
 
         // PINK : enjin beri pilihan ejaan (sebenar / literal), pengguna yang putuskan
         function bukaPilihan(event, idx, pilih) {
