@@ -398,10 +398,15 @@
             else if (type === 'hitam') { btn.innerHTML = "🔧 SEMAK / BAIKI EJAAN"; btn.className = "bg-orange-500 hover:bg-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
             else { btn.innerHTML = "🔧 SEMAK / BAIKI"; btn.className = "bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
 
+            // kedudukan relatif kepada bekas popup (offsetParent), bukan halaman : supaya betul walau di mana pun perkataan berada
             const rect = event.currentTarget.getBoundingClientRect();
-            tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
-            tooltip.style.top = `${window.scrollY + rect.bottom + 8}px`;
+            const par = tooltip.offsetParent || document.body, pr = par.getBoundingClientRect();
             tooltip.classList.remove('hidden');
+            const half = tooltip.offsetWidth / 2, maxL = Math.max(half, par.clientWidth - half);
+            let left = rect.left - pr.left + (rect.width / 2);
+            left = Math.min(Math.max(left, half), maxL);                 // jangan terkeluar skrin kiri/kanan
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${rect.bottom - pr.top + 8}px`;
         }
 
         function tutupTooltip() { document.getElementById('actionTooltip').classList.add('hidden'); }
