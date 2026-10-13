@@ -10,7 +10,7 @@ var HUKUM_JAWI = {
   konsonan: {
     b:'ب', c:'چ', d:'د', f:'ف', g:'ݢ', h:'ه', j:'ج', k:'ک', l:'ل', m:'م',
     n:'ن', p:'ڤ', x:'کس', q:'ق', r:'ر', s:'س', t:'ت', v:'ۏ', w:'و', y:'ي', z:'ز',
-    ng:'ڠ', ny:'ڽ', sy:'ش', kh:'خ', gh:'غ'
+    ng:'ڠ', ny:'ڽ', sy:'ش', sh:'ش', kh:'خ', gh:'غ'
   },
   // k di penghujung suku kata (koda) -> qaf : kakak کاکق, kotak کوتق, emak امق
   kodaK: 'ق',
@@ -95,6 +95,7 @@ var HUKUM_JAWI = {
     // pengecualian sebenar (tak ikut mana-mana hukum di atas) :
     'kita':'کيت',      // i+t sepatutnya kekal alif, tetapi kamus: کيت
     'harimau':'هريماو', // a-i-au : alif depan gugur (nota video) - bukan corak a-a-x
+    'shah':'شاه',       // Parsi/Arab : alif kekal (syah شاه dalam kamus)
     'emak':'امق'       // e awal kata terbuka lazimnya taling, emak = pepet
   },
 

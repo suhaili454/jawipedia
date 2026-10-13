@@ -12,7 +12,7 @@
   var H = (typeof module !== 'undefined' && module.exports && typeof require === 'function')
     ? require('./hukum_jawi.js') : root.HUKUM_JAWI;
 
-  var DIGRAF = ['ng', 'ny', 'sy', 'kh', 'gh'];
+  var DIGRAF = ['ng', 'ny', 'sy', 'sh', 'kh', 'gh'];   // sh = ش (Arab/Inggeris: Shah, Aisha), sama dgn sy
   var VOKAL = 'aeiou';
   var KLUSTER = ['bl','br','dr','fl','fr','gl','gr','kl','kr','pl','pr','tr'];
 
@@ -70,6 +70,7 @@
     if (!s.on.length) { tr.push('a selepas vokal: alif kekal'); return 'ا'; }
     var K = s.on[s.on.length - 1], V1 = sy[i - 1].nu, selA = (V1 === 'a' || V1 === 'ai' || V1 === 'au');
     if (inSet(H.darlung, K)) { tr.push('DARLUNG (' + K + '): alif akhir KEKAL'); return 'ا'; }
+    if (V1 === 'ai' && (K === 'sy' || K === 'sh')) { tr.push('ai + ' + K + ': alif kekal (waisya وايشا)'); return 'ا'; }
     if (selA) {
       if (inSet(H.kekalSelepasA_tambahan, K)) { tr.push('selepas a + ' + K + ': alif kekal'); return 'ا'; }
       tr.push('KT12 (' + V1 + '+' + K + '): alif akhir GUGUR'); return '';
