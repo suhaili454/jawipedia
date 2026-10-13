@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jawipedia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        jawi: ['Noto Naskh Arabic', 'Traditional Arabic', 'serif'],
+                    },
+                    colors: {
+                        turq: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .font-jawi { font-size: 1.9rem; direction: rtl; line-height: 2.2; }
+        .btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn:active { transform: scale(0.95); }
+        
+        /* LOGIK 5 WARNA JAWIPEDIA */
+        .word-hitam { color: #1e293b; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .word-hitam:hover { background-color: #f1f5f9; border-radius: 4px; padding: 0 2px; }
+        
+        .word-biru { color: #2563eb; font-weight: 700; cursor: pointer; border-bottom: 2px dashed #93c5fd; transition: all 0.2s; }
+        .word-biru:hover { background-color: #eff6ff; }
+        
+        .word-oren { color: #f97316; font-weight: 700; cursor: pointer; border-bottom: 2px dashed #fdba74; transition: all 0.2s; }
+        .word-oren:hover { background-color: #fff7ed; }
+        
+        .word-ungu { color: #9333ea; font-weight: 700; cursor: pointer; border-bottom: 2px dashed #d8b4fe; transition: all 0.2s; }
+        .word-ungu:hover { background-color: #faf5ff; }
+        
+        .word-hijau { color: #16a34a; font-weight: 700; cursor: pointer; border-bottom: 2px solid #86efac; transition: all 0.2s; }
+        .word-hijau:hover { background-color: #f0fdf4; }
+
+        .word-merah { color: #ef4444; font-weight: 600; cursor: pointer; border-bottom: 2px dashed #fca5a5; transition: all 0.2s; }
+        .word-merah:hover { background-color: #fef2f2; }
+        
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease-out forwards; }
+        .modal-content { animation: slideUp 0.3s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-8">
+
+    <div class="bg-white p-6 sm:p-10 rounded-[2rem] shadow-2xl w-full max-w-4xl border border-slate-100 relative overflow-hidden">
+        <!-- Deco Elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-turq-100 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-oren-100 rounded-full blur-3xl opacity-50 -ml-10 -mb-10"></div>
+
+        <div class="text-center mb-8 relative z-10 flex flex-col items-center">
+            <!-- LOGO JAWIPEDIA -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 mb-3 bg-white rounded-2xl shadow-md border border-turq-100 p-2 flex items-center justify-center transition-transform hover:scale-105 duration-300">
+                <svg viewBox="0 0 100 100" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Rangkaian Crowdsource (Bulatan Luar) -->
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#14b8a6" stroke-width="3" stroke-dasharray="1 6" />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#f97316" stroke-dasharray="8 6" stroke-width="2" />
+                    
+                    <!-- Titik-titik Komuniti -->
+                    <circle cx="50" cy="8" r="4" fill="#14b8a6" />
+                    <circle cx="92" cy="50" r="4" fill="#14b8a6" />
+                    <circle cx="50" cy="92" r="4" fill="#14b8a6" />
+                    <circle cx="8" cy="50" r="4" fill="#14b8a6" />
+                    <circle cx="21" cy="21" r="3.5" fill="#f97316" />
+                    <circle cx="79" cy="21" r="3.5" fill="#f97316" />
+                    <circle cx="79" cy="79" r="3.5" fill="#f97316" />
+                    <circle cx="21" cy="79" r="3.5" fill="#f97316" />
+
+                    <!-- Huruf J (Mata Pena Jawi & Tulisan) -->
+                    <path d="M 46,26 C 46,26 31,43 45,55 C 50,60 48,64 36,63 C 27,62 26,51 31,45" fill="none" stroke="#14b8a6" stroke-width="7" stroke-linecap="round" />
+                    
+                    <!-- Kalam (Pena) Motif -->
+                    <path d="M 52,24 L 41,35 L 38,44 L 47,41 L 58,30 Z" fill="#f97316" />
+                    <line x1="38" y1="44" x2="44" y2="38" stroke="#ffffff" stroke-width="1.5" />
+                    
+                    <!-- Huruf Jawi 'ج' (Jeem) -->
+                    <path d="M 55,42 Q 70,42 63,35 Q 52,35 60,44 Q 68,54 62,60 Q 56,66 48,59" fill="none" stroke="#f97316" stroke-width="6.5" stroke-linecap="round" />
+                    <circle cx="59" cy="52" r="3.5" fill="#f97316" />
+                </svg>
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-turq-600 to-blue-500 mb-1 tracking-tight">Jawipedia</h1>
+            <p class="text-slate-500 text-sm sm:text-base font-medium">Enjin Jawi Crowdsource No.1 Malaysia</p>
+        </div>
+
+        <div class="mb-6 relative z-10">
+            <textarea id="rumiInput" oninput="prosesRumiKeJawi()" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-turq-100 focus:border-turq-500 outline-none transition-all text-slate-700 text-lg resize-none shadow-inner" placeholder="Taip ayat Rumi anda di sini..."></textarea>
+        </div>
+
+        <div class="flex flex-wrap gap-3 mb-8 justify-center relative z-10">
+            <button onclick="bukaDashboard()" class="btn bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2">
+                📋 Papan Pemuka Komuniti (<span id="countPending">0</span>)
+            </button>
+            <button onclick="kosongkan()" class="btn bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-3 px-6 rounded-xl flex items-center gap-2">
+                Kosongkan
+            </button>
+        </div>
+
+        <div class="mb-4 relative z-10">
+            <div id="jawiOutput" class="font-jawi bg-white border-2 border-slate-100 rounded-2xl w-full p-6 min-h-[160px] text-slate-800 break-words shadow-sm relative leading-relaxed"></div>
+            
+            <!-- TOOLTIP TINDAKAN -->
+            <div id="actionTooltip" class="hidden absolute bg-slate-800 text-white text-xs sm:text-sm font-semibold p-2.5 rounded-xl shadow-xl flex items-center gap-2 z-30 transition-all duration-150 transform -translate-x-1/2 mt-2">
+                <span class="text-slate-300 border-r border-slate-600 pr-2 mr-1" id="tooltipWord">""</span>
+                <button id="btnTooltipBaiki" onclick="tutupTooltip(); jalankanFungsiTooltip()" class="bg-turq-500 hover:bg-turq-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-all">
+                    🔧 TINDAKAN
+                </button>
+                <button onclick="tutupTooltip()" class="text-slate-400 hover:text-white px-1">✕</button>
+            </div>
+
+            <!-- PETUNJUK WARNA -->
+            <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs sm:text-sm font-medium grid grid-cols-2 md:grid-cols-3 gap-3 justify-center text-slate-600">
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-slate-800"></div> Asal (Hitam)</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-blue-600"></div> Baru (Biru)</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-orange-500"></div> Baiki Asal (Oren)</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-purple-600"></div> Baiki Semula (Ungu)</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div> Lulus (Hijau)</div>
+                <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500 border border-red-200"></div> Tiada Ejaan (Merah)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TINDAKAN (Satu Modal Dinamik untuk Tambah & Baiki) -->
+    <div id="modalTindakan" class="modal items-center justify-center p-4">
+        <div class="modal-content bg-white p-6 sm:p-8 rounded-[2rem] shadow-2xl w-full max-w-md border-t-4 border-turq-500 relative">
+            <h2 id="modalTitle" class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">Sumbang Ejaan</h2>
+            
+            <input type="hidden" id="modalType">
+            
+            <div class="mb-4">
+                <label class="block text-slate-700 text-sm font-semibold mb-2 ml-1">Perkataan Rumi</label>
+                <input type="text" id="modalRumi" class="w-full p-4 bg-slate-100 border border-slate-200 rounded-xl outline-none font-semibold text-slate-600" readonly>
+            </div>
+            
+            <div id="ruangEjaanLama" class="mb-4 hidden">
+                <label class="block text-slate-700 text-xs font-semibold mb-1 ml-1 text-slate-400">Ejaan Semasa</label>
+                <div id="modalJawiLama" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-jawi text-xl text-slate-500" dir="rtl"></div>
+            </div>
+            
+            <div class="mb-8">
+                <label class="block text-slate-700 text-sm font-semibold mb-2 ml-1">Ejaan Jawi Baru</label>
+                <input type="text" id="modalJawiBaru" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-turq-500 outline-none font-jawi text-2xl" placeholder="Taip di sini" dir="rtl">
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="simpanTindakan()" class="flex-grow btn bg-turq-500 hover:bg-turq-600 text-white font-semibold py-3 px-4 rounded-xl shadow-lg">Hantar</button>
+                <button onclick="tutupModal('modalTindakan')" class="btn bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-xl">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DASHBOARD KOMUNITI -->
+    <div id="modalDashboard" class="modal items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-6 sm:p-8 border-b border-slate-100 bg-slate-800 text-white flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold flex items-center gap-3">📋 Papan Pemuka Komuniti</h2>
+                    <p class="text-sm text-slate-400 mt-1">Undi atau baiki sumbangan orang ramai. 5 Undi diperlukan.</p>
+                </div>
+                <button onclick="tutupModal('modalDashboard')" class="btn bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-xl">✕</button>
+            </div>
+            
+            <div class="flex border-b border-slate-200 bg-slate-50 overflow-x-auto">
+                <button onclick="tukarTab('semua')" id="tab-semua" class="tab-btn px-6 py-4 font-semibold text-turq-600 border-b-2 border-turq-500 bg-white">Semua (<span id="c-semua">0</span>)</button>
+                <button onclick="tukarTab('biru')" id="tab-biru" class="tab-btn px-6 py-4 font-semibold text-slate-500 hover:text-slate-800">🔵 Baru (<span id="c-biru">0</span>)</button>
+                <button onclick="tukarTab('oren')" id="tab-oren" class="tab-btn px-6 py-4 font-semibold text-slate-500 hover:text-slate-800">🟠 Baiki Asal (<span id="c-oren">0</span>)</button>
+                <button onclick="tukarTab('ungu')" id="tab-ungu" class="tab-btn px-6 py-4 font-semibold text-slate-500 hover:text-slate-800">🟣 Baiki Semula (<span id="c-ungu">0</span>)</button>
+                <button onclick="tukarTab('hijau')" id="tab-hijau" class="tab-btn px-6 py-4 font-semibold text-slate-500 hover:text-slate-800">🟢 Lulus (<span id="c-hijau">0</span>)</button>
+            </div>
+
+            <div id="senaraiDashboard" class="p-6 sm:p-8 space-y-4 overflow-y-auto flex-grow bg-slate-50/50"></div>
+        </div>
+    </div>
+
+    <!-- PANGKALAN DATA (Mesti pastikan fail wujud) -->
+    <script src="kamus_2.js"></script>
+    <script src="kamus_tambahan.js"></script>
+
+    <script>
+        // 1. SETUP FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSZXfGOIGdvv7tUgXJ4lBZZuhxKVmlzpo",
+            authDomain: "crowdsource-jawi.firebaseapp.com",
+            databaseURL: "https://crowdsource-jawi-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "crowdsource-jawi"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let dataPending = {};
+        let dataApproved = {};
+        let currentTab = 'semua';
+        const VOTE_THRESHOLD = 5;
+        
+        let currentSelectedRumi = '';
+        let currentSelectedJawi = '';
+        let currentSelectedType = '';
+
+        // Penapis Typo / Shortform Unik 
+        const aliasRumi = {
+            "insha allah": "insyaallah",
+            "inshaa allah": "insyaallah",
+            "in syaa allah": "insyaallah",
+            "insya allah": "insyaallah",
+            "elhamdu lillah": "alhamdulillah",
+            "alhamdullilah": "alhamdulillah",
+            "alhamdulilah": "alhamdulillah",
+            "bismillahirahmanirrahim": "bismillahirrahmanirrahim",
+            "assalammualaikum": "assalamualaikum"
+        };
+
+        db.ref('pending').on('value', (snapshot) => {
+            dataPending = snapshot.val() || {};
+            kemaskiniKiraanDashboard();
+            if(document.getElementById('modalDashboard').classList.contains('active')) renderDashboard();
+            prosesRumiKeJawi();
+        });
+
+        db.ref('approved').on('value', (snapshot) => {
+            dataApproved = snapshot.val() || {};
+            kemaskiniKiraanDashboard();
+            if(document.getElementById('modalDashboard').classList.contains('active')) renderDashboard();
+            prosesRumiKeJawi();
+        });
+
+        // 2. ENJIN N-GRAM & SHORTFORM
+        function prosesRumiKeJawi() {
+            const text = document.getElementById('rumiInput').value;
+            if (!text.trim()) { document.getElementById('jawiOutput').innerHTML = ''; return; }
+
+            // Memisahkan perkataan tetapi mengekalkan ruang/tanda baca
+            const tokens = text.split(/([a-zA-Z0-9\-']+)/);
+            let hasil = [];
+            let i = 0;
+
+            while (i < tokens.length) {
+                let token = tokens[i];
+                // Jika bukan perkataan (ruang, koma, dsb), terus masukkan
+                if (!token || !/^[a-zA-Z0-9\-']+$/.test(token)) {
+                    if(token) hasil.push(token.replace(/
+/g, '<br>'));
+                    i++; continue;
+                }
+
+                // Cari gabungan 3 patah, 2 patah, 1 patah (N-Gram)
+                let matchFound = false;
+                for (let n = 3; n >= 1; n--) {
+                    if (i + (n - 1) * 2 < tokens.length) {
+                        let candidateArr = [];
+                        let isValid = true;
+                        
+                        for (let j = 0; j < n; j++) {
+                            let wordIdx = i + j * 2;
+                            if (!/^[a-zA-Z0-9\-']+$/.test(tokens[wordIdx])) { isValid = false; break; }
+                            candidateArr.push(tokens[wordIdx]);
+                            
+                            // Pastikan pemisah antara perkataan hanyalah 'space' (bukan koma/titik)
+                            if (j < n - 1) {
+                                let sepIdx = wordIdx + 1;
+                                if (tokens[sepIdx] !== ' ') { isValid = false; break; }
+                            }
+                        }
+
+                        if (isValid) {
+                            let candidate = candidateArr.join(' ').toLowerCase();
+                            
+                            // LALUAN PENAPIS 1: Singkatan kamus_tambahan
+                            let normalized = (typeof kamusShortform !== 'undefined' && kamusShortform[candidate]) ? kamusShortform[candidate] : candidate;
+                            // LALUAN PENAPIS 2: Alias Typo
+                            normalized = aliasRumi[normalized] || normalized;
+
+                            let dataEjaan = semakKamusPrioriti(normalized);
+                            
+                            if (dataEjaan) {
+                                let oriFormat = dataEjaan.jawi.includes('/') ? dataEjaan.jawi.split('/').join('<span class="alt-separator">/</span>') : dataEjaan.jawi;
+                                hasil.push(`<span class="word-${dataEjaan.type}" onclick="pilihTeks(event, '${normalized}', '${dataEjaan.jawi}', '${dataEjaan.type}')">${oriFormat}</span>`);
+                                i += (n * 2) - 1; // Langkau token yang dah diproses
+                                matchFound = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!matchFound) {
+                    let tokenLower = token.toLowerCase();
+                    let normalized = (typeof kamusShortform !== 'undefined' && kamusShortform[tokenLower]) ? kamusShortform[tokenLower] : tokenLower;
+                    hasil.push(`<span class="word-merah" onclick="pilihTeks(event, '${normalized}', '', 'merah')" title="Klik untuk tambah ejaan">${token}</span>`);
+                    i++;
+                }
+            }
+            document.getElementById('jawiOutput').innerHTML = hasil.join('');
+        }
+
+        function semakKamusPrioriti(word) {
+            // 1. Hijau (Lulus)
+            if (dataApproved[word]) return { jawi: dataApproved[word].jawi, type: 'hijau' };
+            // 2. Biru / Oren / Ungu (Sedang diundi - OVERRIDE)
+            if (dataPending[word]) return { jawi: dataPending[word].jawi, type: dataPending[word].type };
+            // 3. Hitam (Kamus Tambahan Patch)
+            if (typeof kamusTambahan !== 'undefined' && kamusTambahan[word]) return { jawi: kamusTambahan[word], type: 'hitam' };
+            // 4. Hitam (Kamus Asal)
+            if (typeof kamusJawi !== 'undefined' && kamusJawi[word]) return { jawi: kamusJawi[word], type: 'hitam' };
+            return null; // Merah
+        }
+
+        // 3. LOGIK MODAL TINDAKAN & TOOLTIP
+        function pilihTeks(event, rumi, jawi, type) {
+            event.stopPropagation();
+            currentSelectedRumi = rumi; currentSelectedJawi = jawi; currentSelectedType = type;
+            
+            const tooltip = document.getElementById('actionTooltip');
+            document.getElementById('tooltipWord').textContent = `"${rumi.toUpperCase()}"`;
+            const btn = document.getElementById('btnTooltipBaiki');
+
+            if (type === 'merah') { btn.innerHTML = "➕ TAMBAH EJAAN"; btn.className = "bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
+            else if (type === 'hitam') { btn.innerHTML = "🔧 BETULKAN ASAL"; btn.className = "bg-orange-500 hover:bg-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
+            else { btn.innerHTML = "🔧 SEMAK / BAIKI"; btn.className = "bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg flex items-center gap-1"; }
+
+            const rect = event.currentTarget.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+            tooltip.style.top = `${window.scrollY + rect.bottom + 8}px`;
+            tooltip.classList.remove('hidden');
+        }
+
+        function tutupTooltip() { document.getElementById('actionTooltip').classList.add('hidden'); }
+        window.onclick = function(e) { tutupTooltip(); if(e.target.classList.contains('modal')) e.target.classList.remove('active'); }
+
+        function jalankanFungsiTooltip() {
+            const rumi = currentSelectedRumi;
+            const type = currentSelectedType;
+            
+            document.getElementById('modalTindakan').classList.add('active');
+            document.getElementById('modalRumi').value = rumi;
+            document.getElementById('modalJawiBaru').value = '';
+            
+            const divLama = document.getElementById('ruangEjaanLama');
+            
+            if (type === 'merah') {
+                document.getElementById('modalTitle').innerHTML = "➕ Tambah Ejaan Baru";
+                document.getElementById('modalType').value = "biru";
+                divLama.classList.add('hidden');
+            } else {
+                document.getElementById('modalTitle').innerHTML = "🔧 Baiki Ejaan Jawi";
+                // Jika hitam -> jadi Oren. Jika Biru/Oren/Ungu/Hijau -> jadi Ungu
+                document.getElementById('modalType').value = (type === 'hitam') ? "oren" : "ungu";
+                divLama.classList.remove('hidden');
+                document.getElementById('modalJawiLama').textContent = currentSelectedJawi;
+            }
+            setTimeout(() => document.getElementById('modalJawiBaru').focus(), 100);
+        }
+
+        function simpanTindakan() {
+            const rumi = document.getElementById('modalRumi').value;
+            const jawiBaru = document.getElementById('modalJawiBaru').value.trim();
+            const type = document.getElementById('modalType').value;
+
+            if(!jawiBaru) { alert('Sila masukkan ejaan Jawi.'); return; }
+            if(document.getElementById('ruangEjaanLama').classList.contains('hidden') === false) {
+                if(jawiBaru === document.getElementById('modalJawiLama').textContent) { alert('Ejaan mesti berbeza.'); return; }
+            }
+
+            db.ref('pending/' + rumi).set({
+                jawi: jawiBaru,
+                type: type,
+                votes: 0,
+                timestamp: Date.now()
+            }).then(() => {
+                tutupModal('modalTindakan');
+                alert(`✅ Berjaya dihantar! Ejaan "${rumi}" telah ditukar warna dan dipaparkan di Dashboard untuk undian.`);
+            }).catch(() => alert("Ralat database."));
+        }
+
+        // 4. LOGIK DASHBOARD (SENARAI KATEGORI)
+        function bukaDashboard() { document.getElementById('modalDashboard').classList.add('active'); renderDashboard(); }
+        function tutupModal(id) { document.getElementById(id).classList.remove('active'); }
+        function kosongkan() { document.getElementById('rumiInput').value = ""; document.getElementById('jawiOutput').innerHTML = ""; document.getElementById('rumiInput').focus(); }
+
+        function tukarTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('border-b-2', 'border-turq-500', 'text-turq-600', 'bg-white');
+                b.classList.add('text-slate-500');
+            });
+            const aktifBtn = document.getElementById(`tab-${tab}`);
+            aktifBtn.classList.remove('text-slate-500');
+            aktifBtn.classList.add('border-b-2', 'border-turq-500', 'text-turq-600', 'bg-white');
+            currentTab = tab;
+            renderDashboard();
+        }
+
+        function kemaskiniKiraanDashboard() {
+            let pendingCount = Object.keys(dataPending).length;
+            document.getElementById('countPending').textContent = pendingCount;
+            
+            let countBiru = 0, countOren = 0, countUngu = 0;
+            Object.values(dataPending).forEach(i => {
+                if(i.type === 'biru') countBiru++; else if(i.type === 'oren') countOren++; else if(i.type === 'ungu') countUngu++;
+            });
+            let countHijau = Object.keys(dataApproved).length;
+
+            document.getElementById('c-semua').textContent = pendingCount + countHijau;
+            document.getElementById('c-biru').textContent = countBiru;
+            document.getElementById('c-oren').textContent = countOren;
+            document.getElementById('c-ungu').textContent = countUngu;
+            document.getElementById('c-hijau').textContent = countHijau;
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('senaraiDashboard');
+            let entries = [];
+            
+            // Masukkan data pending
+            for(const [r, obj] of Object.entries(dataPending)) {
+                if(currentTab === 'semua' || currentTab === obj.type) entries.push({rumi: r, jawi: obj.jawi, type: obj.type, votes: obj.votes});
+            }
+            // Masukkan data approved (Hijau)
+            if(currentTab === 'semua' || currentTab === 'hijau') {
+                for(const [r, obj] of Object.entries(dataApproved)) {
+                    entries.push({rumi: r, jawi: obj.jawi, type: 'hijau', votes: 'LULUS'});
+                }
+            }
+
+            if (entries.length === 0) { 
+                container.innerHTML = `<div class="text-center py-16 text-slate-400 font-medium">Tiada rekod dalam kategori ini.</div>`; 
+                return; 
+            }
+
+            // Susun dari undian tertinggi
+            entries.sort((a, b) => (b.votes === 'LULUS' ? 99 : b.votes) - (a.votes === 'LULUS' ? 99 : a.votes));
+
+            container.innerHTML = entries.map(item => {
+                let badge = ''; let textColor = ''; let borderColor = '';
+                if(item.type === 'biru') { badge = '🔵 BARU'; textColor = 'text-blue-600'; borderColor = 'border-blue-200'; }
+                if(item.type === 'oren') { badge = '🟠 BAIKI ASAL'; textColor = 'text-orange-500'; borderColor = 'border-orange-200'; }
+                if(item.type === 'ungu') { badge = '🟣 SEMAK SEMULA'; textColor = 'text-purple-600'; borderColor = 'border-purple-200'; }
+                if(item.type === 'hijau') { badge = '🟢 LULUS'; textColor = 'text-green-600'; borderColor = 'border-green-300'; }
+
+                return `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border ${borderColor} flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex-grow w-full md:w-auto text-center md:text-left">
+                        <div class="flex justify-center md:justify-start items-center gap-2 mb-2">
+                            <span class="font-bold text-slate-800 text-lg uppercase tracking-wider">${item.rumi}</span>
+                            <span class="text-xs font-bold px-2 py-1 bg-slate-100 rounded-md ${textColor}">${badge}</span>
+                        </div>
+                        <div class="font-jawi text-4xl mt-1 ${textColor}" dir="rtl">${item.jawi}</div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 w-full md:w-auto justify-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                        ${item.type !== 'hijau' ? `
+                            <div class="text-slate-600 font-bold px-3 py-1 text-sm">${item.votes}/${VOTE_THRESHOLD}</div>
+                            <button onclick="undiSokong('${item.rumi}')" class="bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-lg shadow-md transition-all">✅ UNDI</button>
+                        ` : `
+                            <div class="text-green-600 font-bold px-3 py-1 flex items-center gap-1">🌟 DISAHKAN KOMUNITI</div>
+                        `}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function undiSokong(rumi) {
+            const refPending = db.ref('pending/' + rumi);
+            refPending.transaction((currentData) => {
+                if (currentData === null) return currentData;
+                currentData.votes++;
+                return currentData;
+            }, (error, committed, snapshot) => {
+                if (error) console.log(error);
+                else if (committed) {
+                    const d = snapshot.val();
+                    if (d.votes >= VOTE_THRESHOLD) {
+                        db.ref('approved/' + rumi).set({ jawi: d.jawi, timestamp: Date.now() }).then(() => {
+                            db.ref('pending/' + rumi).remove();
+                        });
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
