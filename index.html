@@ -151,13 +151,25 @@
                 <div id="modalJawiLama" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl font-jawi text-xl text-slate-500" dir="rtl"></div>
             </div>
             
-            <div class="mb-8">
+            <!-- SEMAK : adakah ejaan ini betul? -->
+            <div id="ruangSemak" class="hidden mb-2">
+                <div class="text-sm font-semibold text-slate-600 mb-2 ml-1">Adakah ejaan ini betul?</div>
+                <div id="semakJawi" class="w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl font-jawi text-4xl text-slate-800 text-center mb-3" dir="rtl" style="line-height:1.8"></div>
+                <div id="semakNota" class="text-xs text-slate-500 text-center mb-4"></div>
+                <div class="flex gap-3">
+                    <button onclick="semakBetul()" class="flex-1 btn bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg">✅ Betul</button>
+                    <button onclick="semakSalah()" class="flex-1 btn bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg">❌ Salah</button>
+                </div>
+                <button onclick="tutupModal('modalTindakan')" class="w-full mt-3 btn bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 px-4 rounded-xl">Batal</button>
+            </div>
+
+            <div id="ruangBaru" class="mb-8">
                 <label class="block text-slate-700 text-sm font-semibold mb-2 ml-1">Ejaan Jawi Baru</label>
                 <input type="text" id="modalJawiBaru" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-turq-500 outline-none font-jawi text-2xl" placeholder="Taip di sini" dir="rtl">
             </div>
             
-            <div class="flex gap-3">
-                <button onclick="simpanTindakan()" class="flex-grow btn bg-turq-500 hover:bg-turq-600 text-white font-semibold py-3 px-4 rounded-xl shadow-lg">Hantar</button>
+            <div id="ruangButang" class="flex gap-3">
+                <button id="btnHantar" onclick="simpanTindakan()" class="flex-grow btn bg-turq-500 hover:bg-turq-600 text-white font-semibold py-3 px-4 rounded-xl shadow-lg">Cadangkan Ejaan Betul</button>
                 <button onclick="tutupModal('modalTindakan')" class="btn bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-xl">Batal</button>
             </div>
         </div>
@@ -424,26 +436,66 @@
             modalLangsung = false; currentCadangan = null;
             const rumi = currentSelectedRumi;
             const type = currentSelectedType;
-            
+            const baru = (type === 'merah' || type === 'kuning');          // tiada ejaan sah lagi (kosong / teka enjin)
+
             document.getElementById('modalTindakan').classList.add('active');
             document.getElementById('modalRumi').value = rumi;
-            const baru = (type === 'merah' || type === 'kuning');
             document.getElementById('modalJawiBaru').value = baru ? (currentSelectedJawi || '') : '';
-            
+            document.getElementById('modalType').value = baru ? 'biru' : (type === 'hitam' ? 'oren' : 'ungu');
+            document.getElementById('btnHantar').textContent = 'Cadangkan Ejaan Betul';
+
             const divLama = document.getElementById('ruangEjaanLama');
-            
-            if (baru) {
-                document.getElementById('modalTitle').innerHTML = (type === 'kuning') ? "🔍 Semak Ejaan (Diteka Enjin)" : "➕ Tambah Ejaan Baru";
-                document.getElementById('modalType').value = "biru";
-                divLama.classList.add('hidden');
-            } else {
-                document.getElementById('modalTitle').innerHTML = "🔧 Baiki Ejaan Jawi";
-                // Jika hitam -> jadi Oren. Jika Biru/Oren/Ungu/Hijau -> jadi Ungu
-                document.getElementById('modalType').value = (type === 'hitam') ? "oren" : "ungu";
-                divLama.classList.remove('hidden');
+            divLama.classList.add('hidden');
+
+            if (type === 'merah') {
+                // tiada ejaan : terus borang tambah
+                document.getElementById('modalTitle').innerHTML = "➕ Tambah Ejaan Baru";
+                document.getElementById('btnHantar').textContent = 'Cadangkan Ejaan';
+                paparBorang(true);
+                setTimeout(() => document.getElementById('modalJawiBaru').focus(), 100);
+                return;
+            }
+            // ada ejaan (hitam / kuning / biru / oren / ungu / hijau) : TANYA DAHULU betul atau salah
+            document.getElementById('modalTitle').innerHTML = (type === 'kuning') ? "🔍 Semak Ejaan (Diteka Enjin)" : "🔎 Semak Ejaan";
+            document.getElementById('semakJawi').textContent = currentSelectedJawi;
+            document.getElementById('semakNota').textContent = {
+                kuning: 'Ejaan ini diteka enjin ikut hukum, belum disahkan.',
+                hitam: 'Ejaan daripada kamus.', biru: 'Sumbangan baharu, sedang menunggu undian.',
+                oren: 'Baikan ke atas ejaan asal, sedang menunggu undian.', ungu: 'Baikan semula, sedang menunggu undian.',
+                hijau: 'Sudah disahkan komuniti.'
+            }[type] || '';
+            paparBorang(false);
+        }
+
+        // false = paparan soalan "Betul / Salah" ; true = borang cadangan ejaan
+        function paparBorang(tunjuk) {
+            document.getElementById('ruangSemak').classList.toggle('hidden', tunjuk);
+            document.getElementById('ruangBaru').classList.toggle('hidden', !tunjuk);
+            document.getElementById('ruangButang').classList.toggle('hidden', !tunjuk);
+        }
+
+        function semakSalah() {
+            const type = currentSelectedType;
+            if (type !== 'kuning') {                                            // tunjuk ejaan semasa supaya mudah dibandingkan
+                document.getElementById('ruangEjaanLama').classList.remove('hidden');
                 document.getElementById('modalJawiLama').textContent = currentSelectedJawi;
             }
+            document.getElementById('modalTitle').innerHTML = "✏️ Cadangkan Ejaan Betul";
+            paparBorang(true);
             setTimeout(() => document.getElementById('modalJawiBaru').focus(), 100);
+        }
+
+        function semakBetul() {
+            const rumi = currentSelectedRumi, type = currentSelectedType;
+            if (type === 'kuning') {
+                // pengguna mengesahkan tekaan enjin -> masuk undian sebagai Biru (jika belum ada sumbangan lain)
+                db.ref('pending/' + rumi).transaction(cur => cur === null ? { jawi: currentSelectedJawi, type: 'biru', votes: 0, timestamp: Date.now() } : undefined)
+                  .then(() => { tutupModal('modalTindakan'); alert(`✅ Terima kasih! Ejaan "${rumi}" dihantar untuk undian komuniti.`); })
+                  .catch(() => alert("Ralat database."));
+                return;
+            }
+            if (type === 'biru' || type === 'oren' || type === 'ungu') { tutupModal('modalTindakan'); undiSokong(rumi); return; }   // Betul = sokong (undi)
+            tutupModal('modalTindakan');                                                                                   // hitam / hijau : kekal
         }
 
         function simpanTindakan() {

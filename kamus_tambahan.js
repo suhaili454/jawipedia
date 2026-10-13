@@ -2,6 +2,8 @@
 // (+200 istilah sains & teknologi) Mengandungi 445 perkataan Jawi tambahan dan 114 shortforms
 
 const kamusTambahan = {
+    // Pembetulan kamus_2 (kamus_2 ada کينا yang dibaca "kina")
+    "kena": "کنا",
     "allah": "الله",
     "allah swt": "الله ﷻ",
     "swt": "ﷻ",
