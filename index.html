@@ -52,7 +52,7 @@
         .word-kuning:hover { background-color: #fef08a; }
 
         /* PINK : 2 pilihan sebaris  [ejaan sebenar] / [ejaan literal] dengan label kecil di atas */
-        .word-pink { color: #db2777; font-weight: 700; border-bottom: 2px dashed #f9a8d4; white-space: nowrap; }
+        .word-pink { color: #db2777; font-weight: 700; border-bottom: 2px dashed #f9a8d4; }
         .pink-opt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: bottom; padding: 0 3px; border-radius: 8px; cursor: pointer; transition: background .15s; }
         .pink-opt:hover { background-color: #fdf2f8; }
         .pink-lbl { font: 600 .55rem/1.2 'Poppins', sans-serif; direction: ltr; color: #be185d; letter-spacing: .02em; white-space: nowrap; }
@@ -74,9 +74,9 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-8">
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen flex items-center justify-center p-3 sm:p-8">
 
-    <div class="bg-white p-6 sm:p-10 rounded-[2rem] shadow-2xl w-full max-w-4xl border border-slate-100 relative overflow-hidden">
+    <div class="bg-white p-4 sm:p-10 rounded-3xl sm:rounded-[2rem] shadow-2xl w-full max-w-4xl border border-slate-100 relative overflow-hidden">
         <!-- Deco Elements -->
         <div class="absolute top-0 right-0 w-32 h-32 bg-turq-100 rounded-full blur-3xl opacity-50 -mr-10 -mt-10"></div>
         <div class="absolute bottom-0 left-0 w-32 h-32 bg-oren-100 rounded-full blur-3xl opacity-50 -ml-10 -mb-10"></div>
@@ -94,17 +94,16 @@
             <textarea id="rumiInput" oninput="prosesRumiKeJawi()" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-turq-100 focus:border-turq-500 outline-none transition-all text-slate-700 text-lg resize-none shadow-inner" placeholder="Taip ayat Rumi anda di sini..."></textarea>
         </div>
 
-        <div class="flex flex-wrap gap-3 mb-8 justify-center relative z-10">
-            <button onclick="bukaDashboard()" class="btn bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-xl shadow-lg flex items-center gap-2">
-                📋 Papan Pemuka Komuniti (<span id="countPending">0</span>)
+        <div class="flex flex-col gap-3 mb-8 w-full max-w-sm mx-auto relative z-10">
+            <button onclick="bukaDashboard()" class="btn bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 w-full"><span class="whitespace-nowrap">📋 Cadangan Komuniti (<span id="countPending">0</span>)</span>
             </button>
-            <button onclick="kosongkan()" class="btn bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-3 px-6 rounded-xl flex items-center gap-2">
+            <button onclick="kosongkan()" class="btn bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-3 px-6 rounded-xl flex items-center justify-center gap-2 w-full">
                 Kosongkan
             </button>
         </div>
 
         <div class="mb-4 relative z-10">
-            <div id="jawiOutput" class="font-jawi bg-white border-2 border-slate-100 rounded-2xl w-full p-6 min-h-[160px] text-slate-800 break-words shadow-sm relative leading-relaxed"></div>
+            <div id="jawiOutput" class="font-jawi bg-white border-2 border-slate-100 rounded-2xl w-full p-4 sm:p-6 min-h-[160px] text-slate-800 break-words shadow-sm relative leading-relaxed"></div>
             
             <!-- TOOLTIP TINDAKAN -->
             <div id="actionTooltip" class="hidden absolute bg-slate-800 text-white text-xs sm:text-sm font-semibold p-2.5 rounded-xl shadow-xl flex items-center gap-2 z-30 transition-all duration-150 transform -translate-x-1/2 mt-2">
@@ -180,7 +179,7 @@
         <div class="modal-content bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
             <div class="p-6 sm:p-8 border-b border-slate-100 bg-slate-800 text-white flex justify-between items-center">
                 <div>
-                    <h2 class="text-2xl font-bold flex items-center gap-3">📋 Papan Pemuka Komuniti</h2>
+                    <h2 class="text-2xl font-bold flex items-center gap-3">📋 Cadangan Komuniti</h2>
                     <p class="text-sm text-slate-400 mt-1">Undi atau baiki sumbangan orang ramai. 5 Undi diperlukan.</p>
                 </div>
                 <button onclick="tutupModal('modalDashboard')" class="btn bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-xl">✕</button>
@@ -222,6 +221,11 @@
         let dataApproved = {};
         let currentTab = 'semua';
         const VOTE_THRESHOLD = 5;
+        // ID tanpa nama untuk peranti ini (untuk elak undi berganda / undi sendiri)
+        const MY_UID = (() => {
+            try { let u = localStorage.getItem('jawi_uid'); if (!u) { u = 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('jawi_uid', u); } return u; }
+            catch (e) { return 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+        })();
         
         let currentSelectedRumi = '';
         let currentSelectedJawi = '';
@@ -489,7 +493,7 @@
             const rumi = currentSelectedRumi, type = currentSelectedType;
             if (type === 'kuning') {
                 // pengguna mengesahkan tekaan enjin -> masuk undian sebagai Biru (jika belum ada sumbangan lain)
-                db.ref('pending/' + rumi).transaction(cur => cur === null ? { jawi: currentSelectedJawi, type: 'biru', votes: 0, timestamp: Date.now() } : undefined)
+                db.ref('pending/' + rumi).transaction(cur => cur === null ? { jawi: currentSelectedJawi, type: 'biru', votes: 0, pencadang: MY_UID, timestamp: Date.now() } : undefined)
                   .then(() => { tutupModal('modalTindakan'); alert(`✅ Terima kasih! Ejaan "${rumi}" dihantar untuk undian komuniti.`); })
                   .catch(() => alert("Ralat database."));
                 return;
@@ -522,6 +526,7 @@
                 jawi: jawiBaru,
                 type: type,
                 votes: 0,
+                pencadang: MY_UID,
                 timestamp: Date.now()
             }).then(() => {
                 tutupModal('modalTindakan');
@@ -570,7 +575,7 @@
             
             // Masukkan data pending
             for(const [r, obj] of Object.entries(dataPending)) {
-                if(currentTab === 'semua' || currentTab === normTipe(obj.type)) entries.push({rumi: r, jawi: obj.jawi, type: normTipe(obj.type), votes: obj.votes});
+                if(currentTab === 'semua' || currentTab === normTipe(obj.type)) entries.push({rumi: r, jawi: obj.jawi, type: normTipe(obj.type), votes: obj.votes, sudah: sudahTerlibat(obj)});
             }
             // Masukkan data approved (Hijau)
             if(currentTab === 'semua' || currentTab === 'hijau') {
@@ -607,7 +612,7 @@
                     <div class="flex items-center gap-3 w-full md:w-auto justify-center bg-slate-50 p-2 rounded-xl border border-slate-100">
                         ${item.type !== 'hijau' ? `
                             <div class="text-slate-600 font-bold px-3 py-1 text-sm">${item.votes}/${VOTE_THRESHOLD}</div>
-                            <button onclick="undiSokong('${item.rumi}')" class="bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-lg shadow-md transition-all">✅ UNDI</button>
+                            ${item.sudah ? `<button disabled class="bg-slate-200 text-slate-400 font-bold py-2 px-5 rounded-lg cursor-not-allowed">${item.sudah}</button>` : `<button onclick="undiSokong('${item.rumi}')" class="bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-lg shadow-md transition-all">✅ UNDI</button>`}
                         ` : `
                             <div class="text-green-600 font-bold px-3 py-1 flex items-center gap-1">🌟 DISAHKAN KOMUNITI</div>
                         `}
@@ -616,21 +621,36 @@
             }).join('');
         }
 
+        function sudahTerlibat(d) {
+            if (!d) return '';
+            if (d.pencadang === MY_UID) return 'Cadangan anda';
+            if (d.voters && d.voters[MY_UID]) return 'Sudah diundi';
+            return '';
+        }
+
         function undiSokong(rumi) {
             const refPending = db.ref('pending/' + rumi);
+            let sebab = '';
             refPending.transaction((currentData) => {
                 if (currentData === null) return currentData;
-                currentData.votes++;
+                sebab = sudahTerlibat(currentData);
+                if (sebab) return;   // batal: tiada perubahan
+                currentData.votes = (currentData.votes || 0) + 1;
+                currentData.voters = currentData.voters || {};
+                currentData.voters[MY_UID] = true;
                 return currentData;
             }, (error, committed, snapshot) => {
-                if (error) console.log(error);
-                else if (committed) {
-                    const d = snapshot.val();
-                    if (d.votes >= VOTE_THRESHOLD) {
-                        db.ref('approved/' + rumi).set({ jawi: d.jawi, timestamp: Date.now() }).then(() => {
-                            db.ref('pending/' + rumi).remove();
-                        });
-                    }
+                if (error) { console.log(error); return; }
+                if (!committed) {
+                    if (sebab === 'Cadangan anda') alert('Anda tidak boleh mengundi ejaan yang anda cadangkan sendiri.');
+                    else if (sebab) alert('Anda sudah mengundi perkataan ini. Satu undi sahaja bagi setiap perkataan.');
+                    return;
+                }
+                const d = snapshot.val();
+                if (d && d.votes >= VOTE_THRESHOLD) {
+                    db.ref('approved/' + rumi).set({ jawi: d.jawi, timestamp: Date.now() }).then(() => {
+                        db.ref('pending/' + rumi).remove();
+                    });
                 }
             });
         }
