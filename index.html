@@ -52,6 +52,10 @@
         .word-kuning:hover { background-color: #fef08a; }
 
         /* PINK : 2 pilihan sebaris  [ejaan sebenar] / [ejaan literal] dengan label kecil di atas */
+        .stat-kad { background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:10px 8px; text-align:center; }
+        .stat-nilai { font:700 1.35rem/1.2 'Poppins',sans-serif; color:#0f766e; font-variant-numeric:tabular-nums; }
+        .stat-label { font:500 .68rem/1.25 'Poppins',sans-serif; color:#64748b; margin-top:2px; }
+        @media (min-width:640px){ .stat-nilai{font-size:1.6rem} .stat-label{font-size:.75rem} }
         .word-pink { color: #db2777; font-weight: 700; border-bottom: 2px dashed #f9a8d4; }
         .pink-opt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: bottom; padding: 0 3px; border-radius: 8px; cursor: pointer; transition: background .15s; }
         .pink-opt:hover { background-color: #fdf2f8; }
@@ -91,7 +95,7 @@
         </div>
 
         <div class="mb-6 relative z-10">
-            <textarea id="rumiInput" oninput="prosesRumiKeJawi()" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-turq-100 focus:border-turq-500 outline-none transition-all text-slate-700 text-lg resize-none shadow-inner" placeholder="Taip ayat Rumi anda di sini..."></textarea>
+            <textarea id="rumiInput" oninput="prosesRumiKeJawi(); jadualKira()" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-turq-100 focus:border-turq-500 outline-none transition-all text-slate-700 text-lg resize-none shadow-inner" placeholder="Taip ayat Rumi anda di sini..."></textarea>
         </div>
 
         <div class="flex flex-col gap-3 mb-8 w-full max-w-sm mx-auto relative z-10">
@@ -126,6 +130,24 @@
                     <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 " style="background:#eab308"></div><div><b>Kuning</b>: Ejaan DITEKA enjin ikut hukum (KT12, DARLUNG, 3 suku kata, imbuhan). Belum disahkan, sila semak sendiri dan klik untuk membetulkan.</div></div>
                     <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 " style="background:#db2777"></div><div><b>Pink</b>: Enjin tak pasti (nama Arab, singkatan, ejaan Inggeris, typo). Dua pilihan: klik satu, terus disahkan.</div></div>
                     <div class="flex items-start gap-2"><div class="w-3 h-3 mt-1 rounded-full shrink-0 bg-red-500 border border-red-200"></div><div><b>Merah</b>: Tiada ejaan. Klik untuk menyumbang ejaan.</div></div>
+                </div>
+            </div>
+
+            <!-- STATISTIK KOMUNITI (masa nyata) -->
+            <div class="mt-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-bold text-slate-700 text-sm">📊 Statistik Komuniti</div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500"><span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span></span><span><b id="stOnline">0</b> dalam talian</span></div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                    <div class="stat-kad"><div class="stat-nilai" id="stPenukaran" data-n="0">0</div><div class="stat-label">Penukaran Rumi → Jawi</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stPerkataan" data-n="0">0</div><div class="stat-label">Perkataan ditukar</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stPengguna" data-n="0">0</div><div class="stat-label">Jumlah pengguna</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stDisahkan" data-n="0">0</div><div class="stat-label">Ejaan disahkan komuniti</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stTambahan" data-n="0" style="color:#2563eb">0</div><div class="stat-label">Ejaan baharu ditambah</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stPembetulan" data-n="0" style="color:#ea580c">0</div><div class="stat-label">Pembetulan dibuat</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stUndian" data-n="0" style="color:#7c3aed">0</div><div class="stat-label">Undian diberi</div></div>
+                    <div class="stat-kad"><div class="stat-nilai" id="stMenunggu" data-n="0" style="color:#475569">0</div><div class="stat-label">Menunggu undian</div></div>
                 </div>
             </div>
         </div>
@@ -221,18 +243,61 @@
             projectId: "crowdsource-jawi"
         };
         firebase.initializeApp(firebaseConfig);
+                // ID tanpa nama untuk peranti ini (untuk elak undi berganda / undi sendiri)
+        const MY_UID = (() => {
+            try { let u = localStorage.getItem('jawi_uid'); if (!u) { u = 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('jawi_uid', u); } return u; }
+            catch (e) { return 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
+        })();
         const db = firebase.database();
+
+        // ===== STATISTIK MASA NYATA =====
+        function statTambah(kunci, n) { try { db.ref('stats/' + kunci).transaction(v => (v || 0) + (n || 1)); } catch (e) {} }
+        function _formatNo(n) { try { return Number(n).toLocaleString('ms-MY'); } catch (e) { return String(n); } }
+        function _animNo(id, sasaran) {
+            const el = document.getElementById(id); if (!el) return;
+            const dari = Number(el.dataset.n || 0); el.dataset.n = sasaran;
+            if (dari === sasaran) { el.textContent = _formatNo(sasaran); return; }
+            const mula = performance.now(), tempoh = 700;
+            (function langkah(t) {
+                const k = Math.min(1, (t - mula) / tempoh), e = 1 - Math.pow(1 - k, 3);
+                el.textContent = _formatNo(Math.round(dari + (sasaran - dari) * e));
+                if (k < 1 && Number(el.dataset.n) === sasaran) requestAnimationFrame(langkah);
+            })(mula);
+        }
+        let _stat = {};
+        function paparStatistik() {
+            _animNo('stPenukaran', _stat.penukaran || 0); _animNo('stPerkataan', _stat.perkataan || 0); _animNo('stPengguna', _stat.pengguna || 0);
+            _animNo('stTambahan', _stat.tambahan || 0); _animNo('stPembetulan', _stat.pembetulan || 0); _animNo('stUndian', _stat.undian || 0);
+            _animNo('stDisahkan', Math.max(_stat.diluluskan || 0, Object.keys(dataApproved || {}).length));
+            _animNo('stMenunggu', Object.keys(dataPending || {}).length);
+        }
+        try {
+            db.ref('stats').on('value', s => { _stat = s.val() || {}; paparStatistik(); });
+            db.ref('online').on('value', s => { const el = document.getElementById('stOnline'); if (el) el.textContent = s.numChildren(); });
+            const _saya = db.ref('online/' + MY_UID);
+            db.ref('.info/connected').on('value', s => { if (s.val() === true) { _saya.onDisconnect().remove(); _saya.set(true); } });
+        } catch (e) { console.log('statistik tidak tersedia', e); }
+        try { if (!localStorage.getItem('jawi_dikira')) { localStorage.setItem('jawi_dikira', '1'); statTambah('pengguna'); } } catch (e) {}
+
+        // kira satu "penukaran" bila pengguna berhenti menaip (2.5 saat) dan teks berubah
+        let _kiraMasa = null, _kiraTerakhir = '';
+        function jadualKira() {
+            clearTimeout(_kiraMasa);
+            _kiraMasa = setTimeout(() => {
+                const t = document.getElementById('rumiInput').value.trim();
+                if (!t || t === _kiraTerakhir) return;
+                _kiraTerakhir = t;
+                const bil = (t.match(/[a-zA-Z0-9\-']+/g) || []).length;
+                if (!bil) return;
+                statTambah('penukaran', 1); statTambah('perkataan', Math.min(bil, 2000));
+            }, 2500);
+        }
 
         let dataPending = {};
         const normTipe = t => (t === 'biru' || t === 'oren' || t === 'ungu') ? t : 'biru';   // data lama yg jenisnya tak sah = penambahan baru (Biru)
         let dataApproved = {};
         let currentTab = 'semua';
         const VOTE_THRESHOLD = 5;
-        // ID tanpa nama untuk peranti ini (untuk elak undi berganda / undi sendiri)
-        const MY_UID = (() => {
-            try { let u = localStorage.getItem('jawi_uid'); if (!u) { u = 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('jawi_uid', u); } return u; }
-            catch (e) { return 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
-        })();
         
         let currentSelectedRumi = '';
         let currentSelectedJawi = '';
@@ -245,7 +310,7 @@
         // Paparan 2 pilihan sebaris [ejaan sebenar] / [ejaan literal]. Jika pengguna dah pilih sebelum ini -> HIJAU terus.
         function paparCadangan(cd) {
             const ap = (typeof dataApproved !== 'undefined') ? dataApproved[kunciFb(cd)] : null;
-            if (ap) return `<span class="word-hijau" data-r="${kunciFb(cd)}" onclick="pilihTeks(event, '${kunciFb(cd)}', '${ap.jawi}', 'hijau')">${ap.jawi}</span>`;
+            if (ap) return `<span class="word-hijau" data-r="${kunciFb(cd)}" onclick="pilihTeks(event, '${esc(kunciFb(cd))}', '${ap.jawi}', 'hijau')">${ap.jawi}</span>`;
             const idx = cadanganList.push(cd) - 1;
             return '<span class="word-pink">' + cd.pilihan.map((p, k) =>
                 `<span class="pink-opt" onclick="bukaPilihan(event, ${idx}, ${k})" title="${p.nota.replace(/"/g, '')}"><span class="pink-lbl">${p.label}</span><span>${p.jawi}</span></span>`
@@ -308,7 +373,7 @@
                     if (!cd && mode === 'penuh' && !besar && !EnjinJawi.kelihatanInggeris(lower) && EnjinJawi.cadangTypo) { cd = EnjinJawi.cadangTypo(lower, cariDlmKamus); akhir = i + 1; }
                 } catch (e) { cd = null; }
                 if (!cd) return null;
-                if (mode === 'awal' && !(cd.jenis === 'singkatan' || (cd.jenis === 'nama' && lower === 'abd'))) return null;
+                if (mode === 'awal' && !(cd.jenis === 'singkatan' || (cd.jenis === 'nama' && /^abd(u|ul|ur|us)?$/.test(lower)))) return null;
                 // singkatan berpenutup titik (Hj. Dr. Mohd.) : titik ditelan, ruang selepasnya dikekalkan
                 if (cd.jenis === 'singkatan' && titik && akhir === i + 1) tokens[i + 1] = sep.slice(1);
                 const html = paparCadangan(cd);
@@ -362,7 +427,7 @@
                             
                             if (dataEjaan) {
                                 let oriFormat = dataEjaan.jawi.includes('/') ? dataEjaan.jawi.split('/').join('<span class="alt-separator">/</span>') : dataEjaan.jawi;
-                                hasil.push(`<span class="word-${dataEjaan.type}" data-r="${normalized}" onclick="pilihTeks(event, '${normalized}', '${dataEjaan.jawi}', '${dataEjaan.type}')">${oriFormat}</span>`);
+                                hasil.push(`<span class="word-${dataEjaan.type}" data-r="${normalized}" onclick="pilihTeks(event, '${esc(normalized)}', '${dataEjaan.jawi}', '${dataEjaan.type}')">${oriFormat}</span>`);
                                 i += (n * 2) - 1; // Langkau token yang dah diproses
                                 matchFound = true;
                                 break;
@@ -385,10 +450,10 @@
                         if (pk) { hasil.push(pk.html); i = pk.akhir; continue; }
                     }
                     if (teka && teka.jawi) {
-                        hasil.push(`<span class="word-kuning" data-r="${normalized}" onclick="pilihTeks(event, '${normalized}', '${teka.jawi}', 'kuning')" title="Diteka ikut hukum: ${teka.terangan.join('; ').replace(/"/g, '')}">${teka.jawi}</span>`);
+                        hasil.push(`<span class="word-kuning" data-r="${normalized}" onclick="pilihTeks(event, '${esc(normalized)}', '${teka.jawi}', 'kuning')" title="Diteka ikut hukum: ${teka.terangan.join('; ').replace(/"/g, '')}">${teka.jawi}</span>`);
                         i++; continue;
                     }
-                    hasil.push(`<span class="word-merah" data-r="${normalized}" onclick="pilihTeks(event, '${normalized}', '', 'merah')" title="Klik untuk tambah ejaan">${token}</span>`);
+                    hasil.push(`<span class="word-merah" data-r="${normalized}" onclick="pilihTeks(event, '${esc(normalized)}', '', 'merah')" title="Klik untuk tambah ejaan">${token}</span>`);
                     i++;
                 }
             }
@@ -397,11 +462,30 @@
             if (out.dataset.html !== htmlBaru) { out.innerHTML = htmlBaru; out.dataset.html = htmlBaru; }   // jangan bina semula jika tiada perubahan (elak elemen diganti ketika diklik)
         }
 
+        // ---- calon ejaan bagi satu perkataan 'pending' : utama + cadangan lain (alts) ----
+        const esc = t => String(t).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        function calonSenarai(obj) {
+            if (!obj) return [];
+            const lst = [{ id: '', jawi: obj.jawi, votes: obj.votes || 0, node: obj }];
+            Object.entries(obj.alts || {}).forEach(([id, a]) => lst.push({ id: id, jawi: a.jawi, votes: a.votes || 0, node: a }));
+            return lst;
+        }
+        // satu undi sahaja bagi satu perkataan (lama ATAU baru); pencadang mana-mana calon pun dikira sudah terlibat
+        function sudahTerlibatPerkataan(obj, calonNode) {
+            const sendiri = sudahTerlibat(calonNode);
+            if (sendiri) return sendiri;
+            const lain = calonSenarai(obj).some(c => c.node !== calonNode && sudahTerlibat(c.node));
+            return lain ? 'Sudah mengundi' : '';
+        }
+        function calonTeratas(obj) {                         // undi tertinggi menang; seri = yang lebih awal (utama)
+            return calonSenarai(obj).reduce((b, c) => (c.votes > b.votes ? c : b));
+        }
+
         function semakKamusPrioriti(word) {
             // 1. Hijau (Lulus)
             if (dataApproved[word]) return { jawi: dataApproved[word].jawi, type: 'hijau' };
             // 2. Biru / Oren / Ungu (Sedang diundi - OVERRIDE)
-            if (dataPending[word]) return { jawi: dataPending[word].jawi, type: normTipe(dataPending[word].type) };
+            if (dataPending[word]) return { jawi: calonTeratas(dataPending[word]).jawi, type: normTipe(dataPending[word].type) };
             // 3. Hitam (Kamus Tambahan Patch)
             if (typeof kamusTambahan !== 'undefined' && kamusTambahan[word]) return { jawi: kamusTambahan[word], type: 'hitam' };
             // 4. Hitam (Kamus Asal)
@@ -445,6 +529,7 @@
         }
 
         function jalankanFungsiTooltip() {
+            _dariDashboard = false;
             document.getElementById('ruangPilihan').classList.add('hidden');
             modalLangsung = false; currentCadangan = null;
             const rumi = currentSelectedRumi;
@@ -544,11 +629,15 @@
             if (type === 'kuning') {
                 // pengguna mengesahkan tekaan enjin -> masuk undian sebagai Biru (jika belum ada sumbangan lain)
                 db.ref('pending/' + rumi).transaction(cur => cur === null ? { jawi: currentSelectedJawi, type: 'biru', votes: 0, pencadang: MY_UID, timestamp: Date.now() } : undefined)
-                  .then(() => { tutupModal('modalTindakan'); alert(`✅ Terima kasih! Ejaan "${rumi}" dihantar untuk undian komuniti.`); })
+                  .then(r => { if (r && r.committed) statTambah('tambahan'); tutupModal('modalTindakan'); alert(`✅ Terima kasih! Ejaan "${rumi}" dihantar untuk undian komuniti.`); })
                   .catch(() => alert("Ralat database."));
                 return;
             }
-            if (type === 'biru' || type === 'oren' || type === 'ungu') { tutupModal('modalTindakan'); undiSokong(rumi); return; }   // Betul = sokong (undi)
+            if (type === 'biru' || type === 'oren' || type === 'ungu') {
+                tutupModal('modalTindakan');
+                const c = calonSenarai(dataPending[rumi]).find(x => x.jawi === currentSelectedJawi) || { id: '' };
+                undiSokong(rumi, c.id); return;
+            }   // Betul = sokong (undi)
             tutupModal('modalTindakan');                                                                                   // hitam / hijau : kekal
         }
 
@@ -567,10 +656,12 @@
                 const kunci = kunciFb(currentCadangan);
                 db.ref('approved/' + kunci).set({ jawi: jawiBaru, timestamp: Date.now(), sumber: 'pilihan-pengguna' })
                   .then(() => db.ref('pending/' + kunci).remove())
-                  .then(() => { tutupModal('modalTindakan'); alert(`✅ Disimpan! Ejaan "${rumi}" kini disahkan terus.`); })
+                  .then(() => { statTambah('tambahan'); statTambah('diluluskan'); tutupModal('modalTindakan'); alert(`✅ Disimpan! Ejaan "${rumi}" kini disahkan terus.`); })
                   .catch(() => alert("Ralat database."));
                 return;
             }
+
+            if (type === 'alt' || dataPending[rumi]) { tambahAlt(rumi, jawiBaru); return; }   // sudah dalam undian : jadi cadangan lain, bukan ganti
 
             db.ref('pending/' + rumi).set({
                 jawi: jawiBaru,
@@ -579,6 +670,7 @@
                 pencadang: MY_UID,
                 timestamp: Date.now()
             }).then(() => {
+                statTambah(type === 'biru' ? 'tambahan' : 'pembetulan');
                 tutupModal('modalTindakan');
                 alert(`✅ Berjaya dihantar! Ejaan "${rumi}" telah ditukar warna dan dipaparkan di Dashboard untuk undian.`);
             }).catch(() => alert("Ralat database."));
@@ -604,6 +696,7 @@
         function kemaskiniKiraanDashboard() {
             let pendingCount = Object.keys(dataPending).length;
             document.getElementById('countPending').textContent = pendingCount;
+            try { paparStatistik(); } catch (e) {}
             
             let countBiru = 0, countOren = 0, countUngu = 0;
             Object.values(dataPending).forEach(i => {
@@ -625,7 +718,7 @@
             
             // Masukkan data pending
             for(const [r, obj] of Object.entries(dataPending)) {
-                if(currentTab === 'semua' || currentTab === normTipe(obj.type)) entries.push({rumi: r, jawi: obj.jawi, type: normTipe(obj.type), votes: obj.votes, sudah: sudahTerlibat(obj)});
+                if(currentTab === 'semua' || currentTab === normTipe(obj.type)) entries.push({rumi: r, jawi: obj.jawi, type: normTipe(obj.type), votes: calonTeratas(obj).votes, obj: obj});
             }
             // Masukkan data approved (Hijau)
             if(currentTab === 'semua' || currentTab === 'hijau') {
@@ -649,24 +742,48 @@
                 if(item.type === 'ungu') { badge = '🟣 SEMAK SEMULA'; textColor = 'text-purple-600'; borderColor = 'border-purple-200'; }
                 if(item.type === 'hijau') { badge = '🟢 LULUS'; textColor = 'text-green-600'; borderColor = 'border-green-300'; }
 
-                return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border ${borderColor} flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div class="flex-grow w-full md:w-auto text-center md:text-left">
+                const kepala = `
                         <div class="flex justify-center md:justify-start items-center gap-2 mb-2">
                             <span class="font-bold text-slate-800 text-lg uppercase tracking-wider">${item.rumi}</span>
                             <span class="text-xs font-bold px-2 py-1 bg-slate-100 rounded-md ${textColor}">${badge}</span>
-                        </div>
+                        </div>`;
+
+                if (item.type === 'hijau') {
+                    return `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border ${borderColor} flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex-grow w-full md:w-auto text-center md:text-left">${kepala}
                         <div class="font-jawi text-4xl mt-1 ${textColor}" dir="rtl">${item.jawi}</div>
                     </div>
-                    
                     <div class="flex items-center gap-3 w-full md:w-auto justify-center bg-slate-50 p-2 rounded-xl border border-slate-100">
-                        ${item.type !== 'hijau' ? `
-                            <div class="text-slate-600 font-bold px-3 py-1 text-sm">${item.votes}/${VOTE_THRESHOLD}</div>
-                            ${item.sudah ? `<button disabled class="bg-slate-200 text-slate-400 font-bold py-2 px-5 rounded-lg cursor-not-allowed">${item.sudah}</button>` : `<button onclick="undiSokong('${item.rumi}')" class="bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-lg shadow-md transition-all">✅ UNDI</button>`}
-                        ` : `
-                            <div class="text-green-600 font-bold px-3 py-1 flex items-center gap-1">🌟 DISAHKAN KOMUNITI</div>
-                        `}
+                        <div class="text-green-600 font-bold px-3 py-1 flex items-center gap-1">🌟 DISAHKAN KOMUNITI</div>
                     </div>
+                </div>`;
+                }
+
+                // calon utama + cadangan lain, masing-masing boleh diundi
+                const baris = calonSenarai(item.obj).map((c, i) => {
+                    const sudah = sudahTerlibatPerkataan(item.obj, c.node);
+                    const butang = sudah
+                        ? `<button disabled class="bg-slate-200 text-slate-400 font-bold py-2 px-5 rounded-lg cursor-not-allowed">${sudah}</button>`
+                        : `<button onclick="undiSokong('${esc(item.rumi)}', '${esc(c.id)}')" class="bg-slate-800 hover:bg-black text-white font-bold py-2 px-5 rounded-lg shadow-md transition-all">✅ UNDI</button>`;
+                    return `
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-3 ${i ? 'mt-4 pt-4 border-t border-dashed border-slate-200' : ''}">
+                        <div class="flex-grow w-full md:w-auto text-center md:text-left">
+                            ${i ? '<div class="text-xs font-semibold text-slate-400 mb-1">Cadangan lain</div>' : ''}
+                            <div class="font-jawi text-4xl ${textColor}" dir="rtl">${c.jawi}</div>
+                        </div>
+                        <div class="flex items-center gap-3 w-full md:w-auto justify-center bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <div class="text-slate-600 font-bold px-3 py-1 text-sm">${c.votes}/${VOTE_THRESHOLD}</div>
+                            ${butang}
+                        </div>
+                    </div>`;
+                }).join('');
+                const had = Object.keys(item.obj.alts || {}).length >= 5;
+                return `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border ${borderColor}">
+                    <div class="text-center md:text-left">${kepala}</div>
+                    ${baris}
+                    ${had ? '' : `<button onclick="cadangLain('${esc(item.rumi)}')" class="mt-4 w-full btn bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 text-slate-600 font-semibold py-2 px-4 rounded-xl text-sm">➕ Cadang ejaan lain</button>`}
                 </div>`;
             }).join('');
         }
@@ -678,10 +795,15 @@
             return '';
         }
 
-        function undiSokong(rumi) {
-            const refPending = db.ref('pending/' + rumi);
+        function undiSokong(rumi, altId) {
+            const pre = dataPending[rumi] ? sudahTerlibatPerkataan(dataPending[rumi], altId ? (dataPending[rumi].alts || {})[altId] : dataPending[rumi]) : '';
+            if (pre) {
+                alert(pre === 'Cadangan anda' ? 'Anda tidak boleh mengundi ejaan yang anda cadangkan sendiri.' : 'Anda sudah mengundi bagi perkataan ini. Satu undi sahaja bagi setiap perkataan.');
+                return;
+            }
+            const refCalon = db.ref('pending/' + rumi + (altId ? '/alts/' + altId : ''));
             let sebab = '';
-            refPending.transaction((currentData) => {
+            refCalon.transaction((currentData) => {
                 if (currentData === null) return currentData;
                 sebab = sudahTerlibat(currentData);
                 if (sebab) return;   // batal: tiada perubahan
@@ -691,19 +813,60 @@
                 return currentData;
             }, (error, committed, snapshot) => {
                 if (error) { console.log(error); return; }
+                if (committed) statTambah('undian');
                 if (!committed) {
                     if (sebab === 'Cadangan anda') alert('Anda tidak boleh mengundi ejaan yang anda cadangkan sendiri.');
-                    else if (sebab) alert('Anda sudah mengundi perkataan ini. Satu undi sahaja bagi setiap perkataan.');
+                    else if (sebab) alert('Anda sudah mengundi ejaan ini. Satu undi sahaja bagi setiap ejaan.');
                     return;
                 }
                 const d = snapshot.val();
                 if (d && d.votes >= VOTE_THRESHOLD) {
+                    statTambah('diluluskan');
                     db.ref('approved/' + rumi).set({ jawi: d.jawi, timestamp: Date.now() }).then(() => {
-                        db.ref('pending/' + rumi).remove();
+                        db.ref('pending/' + rumi).remove();      // buang calon utama + semua cadangan lain
                     });
                 }
             });
         }
+
+        // ---- cadangan ejaan lain bagi perkataan yang sedang diundi ----
+        let _dariDashboard = false;
+        function cadangLain(rumi) {
+            const d = dataPending[rumi]; if (!d) return;
+            const atas = calonTeratas(d);
+            tutupModal('modalDashboard');
+            currentSelectedRumi = rumi; currentSelectedJawi = atas.jawi; currentSelectedType = 'biru';
+            gabungMula(null); modalLangsung = false; currentCadangan = null;
+            document.getElementById('ruangPilihan').classList.add('hidden');
+            document.getElementById('modalTindakan').classList.add('active');
+            document.getElementById('modalRumi').value = rumi;
+            document.getElementById('modalJawiBaru').value = atas.jawi;
+            document.getElementById('modalType').value = 'alt';
+            document.getElementById('ruangEjaanLama').classList.remove('hidden');
+            document.getElementById('modalJawiLama').textContent = atas.jawi;
+            document.getElementById('modalTitle').innerHTML = '➕ Cadang Ejaan Lain';
+            document.getElementById('btnHantar').textContent = 'Cadangkan Ejaan';
+            paparBorang(true);
+            _dariDashboard = true;
+            setTimeout(() => document.getElementById('modalJawiBaru').focus(), 100);
+        }
+        function tambahAlt(rumi, jawiBaru) {
+            const d = dataPending[rumi];
+            if (!d) { alert('Perkataan ini sudah tidak dalam senarai undian.'); return; }
+            if (calonSenarai(d).some(c => c.jawi === jawiBaru)) { alert('Ejaan ini sudah dicadangkan. Sila undi ejaan tersebut.'); return; }
+            if (Object.keys(d.alts || {}).length >= 5) { alert('Sudah ada terlalu banyak cadangan bagi perkataan ini.'); return; }
+            db.ref('pending/' + rumi + '/alts').push({ jawi: jawiBaru, votes: 0, pencadang: MY_UID, timestamp: Date.now() })
+              .then(() => {
+                  statTambah('pembetulan');
+                  tutupModal('modalTindakan');
+                  alert(`✅ Cadangan ejaan lain bagi "${rumi}" dihantar. Ia boleh diundi bersama ejaan sebelumnya.`);
+                  if (_dariDashboard) { _dariDashboard = false; bukaDashboard(); }
+              }).catch(() => alert('Ralat database.'));
+        }
     </script>
+    <footer style="text-align:center;font-size:12px;color:#94a3b8;padding:24px 16px 32px;line-height:1.7">
+        Kamus asas dikompilasi oleh <b>Mohd Zamri Murah</b> dan disahkan oleh Faizah Binte Zakaria,<br>
+        melalui projek <a href="https://github.com/goodmami/rumi-jawi" target="_blank" rel="noopener" style="color:#64748b;text-decoration:underline">goodmami/rumi-jawi</a> (GitHub: <b>goodmami</b>). Terima kasih. 🙏
+    </footer>
 </body>
 </html>

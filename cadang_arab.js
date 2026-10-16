@@ -100,6 +100,7 @@
     ['Faisal', 'فيصل', ['faisol', 'feisal', 'faysal', 'faizal']],
     ['Amir', 'عامر', ['aamir', 'amer']],
     ['Rashid', 'راشد', ['rasyid', 'rashed', 'rasid', 'rashid']],
+    ['Hashim', 'هاشم', ['hasyim', 'hashem', 'hasim', 'hasyem']],
     ['Syed', 'سيد', ['sayyid', 'sayed', 'said', 'sayid', 'seyed']]
   ];
 
@@ -207,46 +208,89 @@
     return null;
   }
 
+  // ejaan Melayu bagi awalan Abd : Abdul = عبدول (wau lam di hujung, seperti Kamarul / Shamsul / Zainol)
+  var ABD_MELAYU = { abdul: 'عبدول', abdur: 'عبدور', abdus: 'عبدوس', abdu: 'عبدو', abd: 'عبد', abdal: 'عبدل', abdel: 'عبدل', abdol: 'عبدول' };
+  function ejaLit(x, opt) { return ABD_MELAYU[x] || hukumEja(x, opt); }
   function hukumEja(w, opt) { var r = E.eja(w, { cariAsas: opt && opt.cariAsas, imbuhan: true, tekaArab: true }); return r.jawi; }
 
   function binaNama(abd, comp, kata, opt) {            // abd = 'abdul' ; comp = ASMA entry | 'lah'
     var kanon, arab, nota;
     if (comp === 'lah') { kanon = 'Abdullah'; arab = 'عبد الله'; nota = 'Abdullah = Hamba Allah'; }
     else { kanon = 'Abdul ' + comp[0]; arab = 'عبد ال' + comp[1]; nota = kanon + ' = Hamba (Allah) Yang ' + comp[2]; }
-    var bunyi = kata.map(function (w) { return hukumEja(w, opt); }).join(' ');
+    var bunyi = kata.map(function (w) { return ejaLit(w, opt); }).join(' ');
     return { kanon: kanon, arab: arab, nota: nota, bunyi: bunyi };
   }
 
 
-  // ---------- Nama majmuk Arab (idafah) : Shamsul Bahri, Nurul Huda, Saiful Islam, Khairul Anuar ...
-  //  bahagian pertama (+ ul/un/ur/us/ud/ut/uz/ush) + bahagian kedua dengan ال  ->  شمس البحري
+  // ---------- Nama / frasa majmuk Arab (idafah) : Shamsul Bahri, Nurul Huda, Darul Ehsan, Baitul Mal, Masjidil Haram ...
+  //  perkataan pertama (Arab, tanpa ال) + akhiran sambungan (ul/un/ur/us/ud/ut/uz/ush/il/in/ir/is/id/it)
+  //  perkataan kedua sesiapa pun -> diberi ال :  شمس + ال + كمال.   Perkataan pertama MESTI dalam IDAFAH1 (elak salah tangkap: betul, tutur, sampul).
   var IDAFAH1 = {
-    nur: 'نور', saif: 'سيف', sayf: 'سيف', shams: 'شمس', syams: 'شمس', badr: 'بدر', zain: 'زين', zayn: 'زين', ain: 'عين',
-    khair: 'خير', khayr: 'خير', amir: 'أمير', kamar: 'قمر', qamar: 'قمر', fakhr: 'فخر', fakhar: 'فخر', bahr: 'بحر', nasr: 'نصر',
-    izz: 'عز', izzat: 'عزة', fadhl: 'فضل', fadl: 'فضل', jamal: 'جمال', kamal: 'كمال', taj: 'تاج', nizam: 'نظام', siraj: 'سراج',
-    ziya: 'ضياء', diya: 'ضياء', hidayat: 'هداية', rahmat: 'رحمة', fathi: 'فتح', fath: 'فتح', ihsan: 'احسان', anwar: 'أنوار',
-    najm: 'نجم', wazir: 'وزير', mulk: 'ملك', rusyd: 'رشد', rushd: 'رشد', hasan: 'حسن', hadi: 'هادي', rashid: 'رشيد'
+    // nama (nur, saif, shams ...)
+    nur: 'نور', saif: 'سيف', sayf: 'سيف', saiful: 'سيف', shams: 'شمس', syams: 'شمس', badr: 'بدر', zain: 'زين', zayn: 'زين', ain: 'عين',
+    khair: 'خير', khayr: 'خير', amir: 'أمير', amin: 'أمين', kamar: 'قمر', qamar: 'قمر', fakhr: 'فخر', fakhar: 'فخر', bahr: 'بحر', baher: 'بحر',
+    nasr: 'نصر', izz: 'عز', izzat: 'عزة', fadhl: 'فضل', fadl: 'فضل', fadzl: 'فضل', jamal: 'جمال', kamal: 'كمال', taj: 'تاج', nizam: 'نظام',
+    siraj: 'سراج', ziya: 'ضياء', diya: 'ضياء', dhiya: 'ضياء', hidayat: 'هداية', rahmat: 'رحمة', fath: 'فتح', fathi: 'فتح', ihsan: 'احسان',
+    anwar: 'أنوار', najm: 'نجم', wazir: 'وزير', mulk: 'ملك', rusyd: 'رشد', rushd: 'رشد', hasan: 'حسن', hadi: 'هادي', rashid: 'رشيد',
+    syahr: 'شهر', shahr: 'شهر', zahr: 'زهر', nazm: 'نظم', hilm: 'حلم', ilm: 'علم', imam: 'امام', salam: 'سلام', sabil: 'سبيل', sabeel: 'سبيل',
+    jihad: 'جهاد', haq: 'حق', hakk: 'حق', hizb: 'حزب', ahl: 'أهل', rabb: 'رب', ulu: 'أولي', ul: 'أول', jabal: 'جبل', qasr: 'قصر',
+    dar: 'دار', bait: 'بيت', baith: 'بيت', bayt: 'بيت', masjid: 'مسجد', madrasat: 'مدرسة', jamiat: 'جامعة', jamiah: 'جامعة',
+    ikhwan: 'إخوان', anis: 'أنيس', asyraf: 'أشراف', ashraf: 'أشراف', burhan: 'برهان', latif: 'لطيف', majd: 'مجد', muhyi: 'محيي',
+    mujahid: 'مجاهد', munir: 'منير', nashr: 'نشر', ridha: 'رضى', ridho: 'رضى', safwan: 'صفوان', sidq: 'صدق', syukr: 'شكر',
+    taufiq: 'توفيق', yaqin: 'يقين', zuhd: 'زهد', wahyu: 'وحي', tarbiyyat: 'تربية', tajdid: 'تجديد', ummat: 'أمة', mahabbat: 'محبة',
+    hijr: 'حجر', fitrat: 'فطرة', hikmat: 'حكمة', nikmat: 'نعمة', himmat: 'همة', ulum: 'علوم', ma: 'ماء'
   };
+  // bentuk ejaan tak lazim untuk perkataan kedua (jika ada dalam kamus, kamus diutamakan)
   var IDAFAH2 = {
     huda: 'الهدى', bahri: 'البحري', bahar: 'البحر', bahr: 'البحر', anuar: 'الأنوار', anwar: 'الأنوار', din: 'الدين', deen: 'الدين',
     islam: 'الاسلام', iman: 'الايمان', nizam: 'النظام', amin: 'الأمين', asyraf: 'الأشراف', ashraf: 'الأشراف', nisa: 'النساء',
     nisak: 'النساء', ain: 'العين', ainie: 'العيني', hakim: 'الحكيم', ikhwan: 'الاخوان', akmal: 'الأكمل', syakirin: 'الشاكرين',
     afiqah: 'العافية', afiah: 'العافية', syuhada: 'الشهداء', hijrah: 'الهجرة', muttaqin: 'المتقين', muslimin: 'المسلمين',
     mukminin: 'المؤمنين', abidin: 'العابدين', arifin: 'العارفين', salihin: 'الصالحين', soleh: 'الصالح', qamar: 'القمر', kamar: 'القمر',
-    shams: 'الشمس', syams: 'الشمس', nur: 'النور', noor: 'النور', fajar: 'الفجر', fajr: 'الفجر', haq: 'الحق', hak: 'الحق'
+    shams: 'الشمس', syams: 'الشمس', nur: 'النور', noor: 'النور', fajar: 'الفجر', fajr: 'الفجر', haq: 'الحق', hak: 'الحق',
+    ehsan: 'الإحسان', ihsan: 'الإحسان', naim: 'النعيم', aman: 'الأمان', hikmah: 'الحكمة', quran: 'القرآن', mal: 'المال', maal: 'المال',
+    makmur: 'المعمور', maqdis: 'المقدس', haram: 'الحرام', aqsa: 'الأقصى', nabawi: 'النبوي', bait: 'البيت', salam: 'السلام',
+    ulum: 'العلوم', hadith: 'الحديث', mardhiah: 'المرضية', mardiah: 'المرضية', mardiyyah: 'المرضية', kamal: 'الكمال', jamal: 'الجمال',
+    nadi: 'النادي', mubarak: 'المبارك', barakah: 'البركة', rahmah: 'الرحمة', rahmat: 'الرحمة', nahdah: 'النهضة', fikr: 'الفكر', fikir: 'الفكر'
   };
   function pecahIdafah1(w) {
-    var m = /^(.+?)(ul|un|ur|us|ud|ut|uz|ush|ush|ul)$/.exec(w); if (!m) return null;
-    var b = m[1].replace(/^sh/, 'sh'); return IDAFAH1[b] ? [b, IDAFAH1[b]] : null;
+    var m = /^(.+?)(ul|un|ur|us|ud|ut|uz|ush|il|in|ir|is|id|it)$/.exec(w);
+    if (m && IDAFAH1[m[1]]) return [m[1], IDAFAH1[m[1]]];
+    return null;
   }
   function cadangIdafah(w, opt) {
     if (w.length !== 2) return null;
     var a = pecahIdafah1(w[0]); if (!a) return null;
     var kedua = IDAFAH2[w[1]] || null, nota2 = w[1];
     if (!kedua) { var c = padanAsma(w[1]); if (c) { kedua = 'ال' + c[1]; nota2 = c[0]; } }
+    if (!kedua && opt && typeof opt.cariAsas === 'function') { var k = opt.cariAsas(w[1]); if (k) kedua = 'ال' + k; }   // mana-mana perkataan dalam kamus
+    if (!kedua) { var h = hukumEja(w[1], opt); if (h) kedua = 'ال' + h; }                                                  // jika tiada : ikut hukum enjin
     if (!kedua) return null;
     return { kanon: a[0] + ' ' + nota2, arab: a[1] + ' ' + kedua, nota: w[0] + ' ' + w[1] + ' = ' + a[1] + ' ' + kedua + ' (ejaan Arab, dengan ال)',
              bunyi: w.map(function (x) { return hukumEja(x, opt); }).join(' ') };
+  }
+
+
+  // ---------- Abd + nama bukan Asmaul Husna (nama jahiliyah / sahabat / lain) : Abd Shams, Abdul Muttalib, Abd Manaf ...
+  // [kanon, arab penuh selepas عبد (sudah termasuk ال jika ada), maksud, varian]
+  var ABD_LAIN = [
+    ['Shams', 'شمس', 'Hamba Matahari (nama jahiliyah)', ['syams', 'shamsi', 'syamsi']],
+    ['Manaf', 'مناف', 'Hamba Manaf (nama jahiliyah)', ['manaff']],
+    ['Muttalib', 'المطلب', 'Hamba al-Muttalib', ['mutalib', 'muthalib', 'mutolib', 'muttolib', 'mutallib', 'muttalip']],
+    ['Uzza', 'العزى', 'Hamba al-Uzza (nama jahiliyah)', ['uzzah', 'ozza', 'uza']],
+    ['Dar', 'الدار', 'Hamba al-Dar (nama jahiliyah)', ['daar']],
+    ['Qais', 'قيس', 'Hamba Qais', ['qays', 'kais', 'keis']],
+    ['Amr', 'عمرو', 'Hamba Amr', ['amru', 'amar']],
+    ['Yaghuth', 'يغوث', 'Hamba Yaghuth (nama jahiliyah)', ['yaguth', 'yaghut']],
+    ['Hilal', 'هلال', 'Hamba Hilal', ['helal']],
+    ['Rabb', 'الرب', 'Hamba (al-)Rabb', ['rab', 'rabbi', 'rabi', 'rabbu']],
+    ['Nasir', 'الناصر', 'Hamba (al-)Nasir', []],
+    ['Aziz', 'العزيز', 'Hamba (al-)Aziz', []]
+  ];
+  function padanAbdLain(x) {
+    x = String(x).toLowerCase();
+    for (var i = 0; i < ABD_LAIN.length; i++) { var e = ABD_LAIN[i]; if (e[0].toLowerCase() === x || e[3].indexOf(x) >= 0) return e; }
+    return null;
   }
 
   function cadang(kata, opt) {
@@ -259,7 +303,18 @@
     // (a) Abdul + nama Allah : dua perkataan, atau satu bersambung
     if (w.length === 2 && ABD.indexOf(w[0]) >= 0) {
       if (w[1] === 'lah') hasil = binaNama(w[0], 'lah', w, opt);
-      else { var c = padanAsma(w[1]); if (c) hasil = binaNama(w[0], c, w, opt); }
+      else {
+        var c = padanAsma(w[1]);
+        if (c) hasil = binaNama(w[0], c, w, opt);
+        else {
+          var jl = padanAbdLain(w[1]);
+          if (jl) hasil = { kanon: 'Abd ' + jl[0], arab: 'عبد ' + ((/^abd(ul|ur|us)$/.test(w[0]) && jl[1].indexOf('ال') !== 0) ? 'ال' : '') + jl[1], nota: 'Abd ' + jl[0] + ' = ' + jl[2], bunyi: w.map(function (x) { return ejaLit(x, opt); }).join(' ') };
+          else if (/^[a-z']{3,}$/.test(w[1]) && !/^(bin|binti|dan|yang|dari|dengan|untuk|ini|itu|atau|telah|akan|pada|dalam|bte|bt)$/.test(w[1]) && !(opt && opt.cariAsas && opt.cariAsas(w[0] + ' ' + w[1]))) {       // nama lain selepas Abdul : عبد + ejaan perkataan itu (semak)
+            var lain = (opt && opt.cariAsas && opt.cariAsas(w[1])) || hukumEja(w[1], opt);
+            if (lain) hasil = { kanon: 'Abd ' + w[1], arab: 'عبد ' + (/^abd(ul|ur|us)$/.test(w[0]) ? 'ال' : '') + lain, nota: 'Abd + ' + w[1] + ' (bukan nama Allah dalam senarai; sila semak ejaan)', bunyi: w.map(function (x) { return ejaLit(x, opt); }).join(' ') };
+          }
+        }
+      }
     } else if (w.length === 1) {
       var p = pecahAbd(w[0]);
       if (p) hasil = binaNama(p[0], p[1] === 'lah' ? 'lah' : padanAsma(p[1]), [w[0]], opt);
@@ -281,7 +336,7 @@
   // ---------- Typo (edit 1 huruf) : cadangan dua pilihan juga ----------
   function cadangTypo(w, cariAsas, opt) {
     w = String(w).toLowerCase(); if (w.length < 5 || !/^[a-z]+$/.test(w) || typeof cariAsas !== 'function') return null;
-    if (cariAsas(w)) return null;
+    if (cariAsas(w) || /^abd(u|ur|us|ul)?$/.test(w)) return null;   // 'abdul' bukan typo 'abdal'
     var abc = 'abcdefghijklmnopqrstuvwxyz', c = {}, i, j;
     for (i = 0; i < w.length; i++) c[w.slice(0, i) + w.slice(i + 1)] = 1;                                  // buang
     for (i = 0; i < w.length - 1; i++) c[w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2)] = 1;             // tukar tempat
