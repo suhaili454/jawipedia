@@ -217,6 +217,38 @@
     return { kanon: kanon, arab: arab, nota: nota, bunyi: bunyi };
   }
 
+
+  // ---------- Nama majmuk Arab (idafah) : Shamsul Bahri, Nurul Huda, Saiful Islam, Khairul Anuar ...
+  //  bahagian pertama (+ ul/un/ur/us/ud/ut/uz/ush) + bahagian kedua dengan ال  ->  شمس البحري
+  var IDAFAH1 = {
+    nur: 'نور', saif: 'سيف', sayf: 'سيف', shams: 'شمس', syams: 'شمس', badr: 'بدر', zain: 'زين', zayn: 'زين', ain: 'عين',
+    khair: 'خير', khayr: 'خير', amir: 'أمير', kamar: 'قمر', qamar: 'قمر', fakhr: 'فخر', fakhar: 'فخر', bahr: 'بحر', nasr: 'نصر',
+    izz: 'عز', izzat: 'عزة', fadhl: 'فضل', fadl: 'فضل', jamal: 'جمال', kamal: 'كمال', taj: 'تاج', nizam: 'نظام', siraj: 'سراج',
+    ziya: 'ضياء', diya: 'ضياء', hidayat: 'هداية', rahmat: 'رحمة', fathi: 'فتح', fath: 'فتح', ihsan: 'احسان', anwar: 'أنوار',
+    najm: 'نجم', wazir: 'وزير', mulk: 'ملك', rusyd: 'رشد', rushd: 'رشد', hasan: 'حسن', hadi: 'هادي', rashid: 'رشيد'
+  };
+  var IDAFAH2 = {
+    huda: 'الهدى', bahri: 'البحري', bahar: 'البحر', bahr: 'البحر', anuar: 'الأنوار', anwar: 'الأنوار', din: 'الدين', deen: 'الدين',
+    islam: 'الاسلام', iman: 'الايمان', nizam: 'النظام', amin: 'الأمين', asyraf: 'الأشراف', ashraf: 'الأشراف', nisa: 'النساء',
+    nisak: 'النساء', ain: 'العين', ainie: 'العيني', hakim: 'الحكيم', ikhwan: 'الاخوان', akmal: 'الأكمل', syakirin: 'الشاكرين',
+    afiqah: 'العافية', afiah: 'العافية', syuhada: 'الشهداء', hijrah: 'الهجرة', muttaqin: 'المتقين', muslimin: 'المسلمين',
+    mukminin: 'المؤمنين', abidin: 'العابدين', arifin: 'العارفين', salihin: 'الصالحين', soleh: 'الصالح', qamar: 'القمر', kamar: 'القمر',
+    shams: 'الشمس', syams: 'الشمس', nur: 'النور', noor: 'النور', fajar: 'الفجر', fajr: 'الفجر', haq: 'الحق', hak: 'الحق'
+  };
+  function pecahIdafah1(w) {
+    var m = /^(.+?)(ul|un|ur|us|ud|ut|uz|ush|ush|ul)$/.exec(w); if (!m) return null;
+    var b = m[1].replace(/^sh/, 'sh'); return IDAFAH1[b] ? [b, IDAFAH1[b]] : null;
+  }
+  function cadangIdafah(w, opt) {
+    if (w.length !== 2) return null;
+    var a = pecahIdafah1(w[0]); if (!a) return null;
+    var kedua = IDAFAH2[w[1]] || null, nota2 = w[1];
+    if (!kedua) { var c = padanAsma(w[1]); if (c) { kedua = 'ال' + c[1]; nota2 = c[0]; } }
+    if (!kedua) return null;
+    return { kanon: a[0] + ' ' + nota2, arab: a[1] + ' ' + kedua, nota: w[0] + ' ' + w[1] + ' = ' + a[1] + ' ' + kedua + ' (ejaan Arab, dengan ال)',
+             bunyi: w.map(function (x) { return hukumEja(x, opt); }).join(' ') };
+  }
+
   function cadang(kata, opt) {
     if (!kata || !kata.length) return null;
     var w = kata.map(function (x) { return String(x).toLowerCase(); });
@@ -232,6 +264,8 @@
       var p = pecahAbd(w[0]);
       if (p) hasil = binaNama(p[0], p[1] === 'lah' ? 'lah' : padanAsma(p[1]), [w[0]], opt);
     }
+    // (a2) nama majmuk Arab (Shamsul Bahri, Nurul Huda ...)
+    if (!hasil && w.length === 2) hasil = cadangIdafah(w, opt);
     // (b) nama lazim berdiri sendiri
     if (!hasil && w.length === 1) {
       var n = padanNama(w[0], opt && opt.besar);
@@ -262,6 +296,53 @@
     ] };
   }
 
+
+  // ---------- Perkataan Melayu dieja Inggeris (budget/bajet, computer/komputer, corner/kona ...) ----------
+  // Jadual : ejaan Inggeris -> [ejaan Melayu, Jawi (pilihan; jika tiada, ambil dari kamus pengguna)].  Tambah di sini.
+  var INGGERIS = {
+    budget: ['bajet'], computer: ['komputer'], goal: ['gol'], offside: ['ofsaid'], penalty: ['penalti'], foul: ['faul'],
+    camera: ['kamera'], corner: ['kona', 'کونا'], referee: ['refri', 'ريفري'], university: ['universiti'], station: ['stesen'],
+    service: ['servis'], project: ['projek'], programme: ['program'], technology: ['teknologi'], social: ['sosial'],
+    discount: ['diskaun'], image: ['imej'], application: ['aplikasi'], telephone: ['telefon'], organisation: ['organisasi'],
+    organization: ['organisasi'], fashion: ['fesyen'], club: ['kelab'], doctor: ['doktor'], cafe: ['kafe'], coffee: ['kopi']
+  };
+  // Corak ejaan Inggeris -> Melayu (dicuba berganda; hanya diterima jika hasilnya ADA dalam kamus dan calon tunggal)
+  var RULES = [
+    [/ation$/, 'asi'], [/tion$/, 'syen'], [/sion$/, 'syen'], [/ity$/, 'iti'], [/ty$/, 'ti'], [/ive$/, 'if'], [/ic$/, 'ik'],
+    [/ism$/, 'isme'], [/ture/, 'char'], [/ck/g, 'k'], [/ph/g, 'f'], [/ee/g, 'i'], [/oo/g, 'u'], [/qu/g, 'kw'], [/x/g, 'ks'],
+    [/c(?=[eiy])/g, 's'], [/c/g, 'k'], [/y$/, 'i'], [/y/g, 'i'], [/e$/, ''], [/(.)\1/g, '$1'], [/ou/g, 'au'], [/th/g, 't'],
+    [/ght/g, 't'], [/ch/g, 'c'], [/sh/g, 'sy'], [/j/g, 'j'], [/w/g, 'w']
+  ];
+  var CIRI_INGGERIS = /ck|tion|sion|ght|ee|oo|ou|ph|qu|wh|tch|dge|ew\b|ough/;
+  function kelihatanInggeris(w) { return CIRI_INGGERIS.test(String(w).toLowerCase()); }
+  function terbit(w) {
+    var out = {}, mula = [w], lapis, i, j, n = 0;
+    out[w] = 1;
+    for (lapis = 0; lapis < 3; lapis++) {
+      var baru = [];
+      mula.forEach(function (x) { for (i = 0; i < RULES.length; i++) { var y = x.replace(RULES[i][0], RULES[i][1]); if (y !== x && y.length >= 3 && !out[y]) { out[y] = 1; baru.push(y); if (++n > 400) return; } } });
+      mula = baru;
+    }
+    delete out[w]; return Object.keys(out);
+  }
+  function cadangInggeris(w, cariAsas, opt) {
+    w = String(w).toLowerCase(); if (!/^[a-z]+$/.test(w) || w.length < 4 || typeof cariAsas !== 'function') return null;
+    if (cariAsas(w)) return null;
+    var m = null, jawi = null, nota;
+    if (INGGERIS[w]) { m = INGGERIS[w][0]; jawi = cariAsas(m) || INGGERIS[w][1] || null; }
+    else if (kelihatanInggeris(w)) {
+      var hit = terbit(w).filter(function (x) { return x.length >= 5 && cariAsas(x); });
+      if (hit.length === 1) { m = hit[0]; jawi = cariAsas(m); }
+    }
+    if (!m || !jawi) return null;
+    var lit = hukumEja(w, opt || {}) || ''; if (!lit || lit === jawi) return null;
+    return { n: 1, rumi: w, jenis: 'inggeris', kanon: m, pilihan: [
+      { label: 'ejaan Melayu', jawi: jawi, nota: w + ' = ' + m + ' (ejaan Melayu)' },
+      { label: 'ejaan literal', jawi: lit, nota: 'ikut huruf seperti ditaip' }
+    ] };
+  }
+
+  E.cadangInggeris = cadangInggeris; E.kelihatanInggeris = kelihatanInggeris; E._INGGERIS = INGGERIS;
   E.cadang = cadang; E.cadangFrasa = cadangFrasa; E.kunciFrasa = kunciFrasa; E.cadangSingkatan = cadangSingkatan; E._SING = SING; E.cadangTypo = cadangTypo; E._kunci = kunci;
   if (typeof module !== 'undefined' && module.exports) module.exports = { cadang: cadang, cadangTypo: cadangTypo, kunci: kunci, ASMA: ASMA, NAMA: NAMA };
 })(typeof window !== 'undefined' ? window : globalThis);
