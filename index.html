@@ -354,7 +354,7 @@
             if (!text.trim()) { const o = document.getElementById('jawiOutput'); o.innerHTML = ''; o.dataset.html = ''; return; }
 
             // Memisahkan perkataan tetapi mengekalkan ruang/tanda baca
-            const tokens = text.split(/([Aa]\/[LlPp](?![a-zA-Z])|[Yy]\.\s?Bhg(?![a-zA-Z])\.?|[a-zA-Z0-9\-']+)/);
+            const tokens = text.replace(/[\u2019\u2018\u02BC\u02BB\u02BF`\u00B4]/g, "'").split(/([Aa]\/[LlPp](?![a-zA-Z])|[Yy]\.\s?Bhg(?![a-zA-Z])\.?|[a-zA-Z0-9\-']+)/);
             let hasil = [];
             cadanganList = [];
             let i = 0;
@@ -445,7 +445,7 @@
                     let normalized = (typeof kamusShortform !== 'undefined' && kamusShortform[tokenLower]) ? kamusShortform[tokenLower] : tokenLower;
                     // FALLBACK ENJIN HUKUM : (1) akar+imbuhan dalam kamus  (2) PINK 2 pilihan: nama Arab / typo  (3) KUNING teka hukum
                     let teka = null;
-                    const singkatanTakDikenali = (normalized === tokenLower) && ((typeof EnjinJawi !== 'undefined' && EnjinJawi.kelihatanInggeris && EnjinJawi.kelihatanInggeris(tokenLower)) || /[A-Z].*[A-Z]/.test(token.replace(/-(Nya|Ku|Mu|Lah|Kah)$/, '')) || token.length < 2 || !/[aeiou]/.test(tokenLower));
+                    const singkatanTakDikenali = (normalized === tokenLower) && ((typeof EnjinJawi !== 'undefined' && EnjinJawi.kelihatanInggeris && EnjinJawi.kelihatanInggeris(tokenLower)) || token.replace(/-(Nya|Ku|Mu|Lah|Kah)$/, '').split('-').some(sg => /[A-Z].*[A-Z]/.test(sg)) || token.length < 2 || !/[aeiou]/.test(tokenLower));
                     if (typeof EnjinJawi !== 'undefined' && !singkatanTakDikenali && /^[a-z]+(-[a-z]+)*$/.test(normalized)) {
                         try { teka = EnjinJawi.eja(normalized, { imbuhan: true, cariAsas: cariDlmKamus }); } catch (e) { teka = null; }
                     }

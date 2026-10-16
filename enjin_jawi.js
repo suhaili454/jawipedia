@@ -157,6 +157,7 @@
         else if (r0 === 'a') { var sk = suku(unit(asasRumi)); if (sk && sk[0].co.length) a = a.replace(/^ا/, ''); }
       }
     }
+    if (akhiran && a.charAt(a.length - 1) === 'ة') a = a.slice(0, -1) + 'ت';   // ة -> ت bila disambung akhiran (rahmat+nya = رحمتڽ)
     var ak = akhiran ? akhiran.jawi : '';
     if (akhiran && (akhiran.rumi === 'an' || akhiran.rumi === 'i')) {
       if (rN === 'a') { if (a.charAt(a.length - 1) !== 'ا') a += 'ا'; ak = akhiran.rumi === 'an' ? S.hamzahAn : 'ي'; }
@@ -182,6 +183,8 @@
       if (p.length === 2 && ART.indexOf(p[0]) >= 0 && typeof opt.cariAsas === 'function') {
         var hk = opt.cariAsas(p[1]);
         if (hk) return { jawi: 'ال' + hk, sumber: 'kamus+imbuhan', terangan: ['kata sandang ' + p[0] + '- + kata Arab dalam kamus'] };
+        var hj = eja(p[1], opt);                                               // tiada dalam kamus : ال + ejaan hukum (tanpa garis)
+        if (hj.jawi !== null) return { jawi: 'ال' + hj.jawi, sumber: 'hukum', terangan: ['kata sandang ' + p[0] + '- (tanpa garis)'].concat(hj.terangan) };
       }
       // akhiran bersambung walau ditulis bergaris: Nabi-Nya -> نبيڽ ; sebaik-baiknya
       var SUF = ['nya', 'lah', 'kah', 'ku', 'mu'], lp = p[p.length - 1];
@@ -191,7 +194,7 @@
           var asasP = (lp === sf) ? p.slice(0, -1) : p.slice(0, -1).concat([lp.slice(0, -sf.length)]);
           if (!asasP.length) break;
           var rb = eja(asasP.join('-'), opt);
-          if (rb.jawi !== null) return { jawi: rb.jawi + H.akhiran[sf], sumber: (rb.sumber === 'kamus' ? 'kamus+imbuhan' : rb.sumber),
+          if (rb.jawi !== null) return { jawi: rb.jawi.replace(/ة$/, 'ت') + H.akhiran[sf], sumber: (rb.sumber === 'kamus' ? 'kamus+imbuhan' : rb.sumber),
                                           terangan: ['akhiran -' + sf + ' bersambung'].concat(rb.terangan) };
           break;
         }
@@ -220,6 +223,13 @@
         if (hs) return { jawi: gabung(cd.awalan, hs, cd.akhiran, cd.asas), sumber: 'kamus+imbuhan',
           terangan: ['asas "' + cd.asas + '" dalam kamus' + (cd.awalan ? ' + awalan ' + cd.awalan.rumi : '') + (cd.akhiran ? ' + akhiran ' + cd.akhiran.rumi : '')] };
       }
+    }
+
+    // -iyyah / -iyyat (nisbah Arab): syamsiyyah -> شمسية ; rabbaniyyah -> ربانية ; awlawiyyat -> اولويات
+    var mY = /^(.{3,}?)iyy(ah|at)$/.exec(w);
+    if (mY) {
+      var bY = eja(mY[1], opt);
+      if (bY.jawi !== null) return { jawi: bY.jawi + (mY[2] === 'ah' ? 'ية' : 'يات'), sumber: 'hukum', terangan: ['akhiran Arab -iyy' + mY[2]].concat(bY.terangan) };
     }
 
     // b0) unsur Arab / nama : jangan teka (kecuali diminta, cth. oleh cadang_arab untuk 'ikut sebutan')
