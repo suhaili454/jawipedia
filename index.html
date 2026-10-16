@@ -441,8 +441,8 @@
                     let normalized = (typeof kamusShortform !== 'undefined' && kamusShortform[tokenLower]) ? kamusShortform[tokenLower] : tokenLower;
                     // FALLBACK ENJIN HUKUM : (1) akar+imbuhan dalam kamus  (2) PINK 2 pilihan: nama Arab / typo  (3) KUNING teka hukum
                     let teka = null;
-                    const singkatanTakDikenali = (normalized === tokenLower) && ((typeof EnjinJawi !== 'undefined' && EnjinJawi.kelihatanInggeris && EnjinJawi.kelihatanInggeris(tokenLower)) || /[A-Z].*[A-Z]/.test(token) || token.length < 2 || !/[aeiou]/.test(tokenLower));
-                    if (typeof EnjinJawi !== 'undefined' && !singkatanTakDikenali && /^[a-z]+$/.test(normalized)) {
+                    const singkatanTakDikenali = (normalized === tokenLower) && ((typeof EnjinJawi !== 'undefined' && EnjinJawi.kelihatanInggeris && EnjinJawi.kelihatanInggeris(tokenLower)) || /[A-Z].*[A-Z]/.test(token.replace(/-(Nya|Ku|Mu|Lah|Kah)$/, '')) || token.length < 2 || !/[aeiou]/.test(tokenLower));
+                    if (typeof EnjinJawi !== 'undefined' && !singkatanTakDikenali && /^[a-z]+(-[a-z]+)*$/.test(normalized)) {
                         try { teka = EnjinJawi.eja(normalized, { imbuhan: true, cariAsas: cariDlmKamus }); } catch (e) { teka = null; }
                     }
                     if (!(teka && teka.sumber === 'kamus+imbuhan')) {

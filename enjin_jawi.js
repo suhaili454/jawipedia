@@ -175,7 +175,32 @@
 
     // kata ganda: x-x -> x٢
     if (w.indexOf('-') > 0) {
-      var p = w.split('-');
+      var p = w.split('-').filter(Boolean);
+      if (p.length < 2) return eja(p.join(''), opt);
+      // kata sandang Arab bergaris: al-/as-/an-... + kata Arab dalam kamus  (as-Sunah -> السنة)
+      var ART = ['al', 'as', 'an', 'ar', 'ad', 'at', 'az', 'ash', 'asy', 'ath', 'adh', 'ats'];
+      if (p.length === 2 && ART.indexOf(p[0]) >= 0 && typeof opt.cariAsas === 'function') {
+        var hk = opt.cariAsas(p[1]);
+        if (hk) return { jawi: 'ال' + hk, sumber: 'kamus+imbuhan', terangan: ['kata sandang ' + p[0] + '- + kata Arab dalam kamus'] };
+      }
+      // akhiran bersambung walau ditulis bergaris: Nabi-Nya -> نبيڽ ; sebaik-baiknya
+      var SUF = ['nya', 'lah', 'kah', 'ku', 'mu'], lp = p[p.length - 1];
+      for (var si = 0; si < SUF.length; si++) {
+        var sf = SUF[si];
+        if (lp === sf || (lp.length >= sf.length + 3 && lp.slice(-sf.length) === sf)) {
+          var asasP = (lp === sf) ? p.slice(0, -1) : p.slice(0, -1).concat([lp.slice(0, -sf.length)]);
+          if (!asasP.length) break;
+          var rb = eja(asasP.join('-'), opt);
+          if (rb.jawi !== null) return { jawi: rb.jawi + H.akhiran[sf], sumber: (rb.sumber === 'kamus' ? 'kamus+imbuhan' : rb.sumber),
+                                          terangan: ['akhiran -' + sf + ' bersambung'].concat(rb.terangan) };
+          break;
+        }
+      }
+      // ganda separa: sebaik-baik -> سباءيق٢
+      if (p.length === 2 && p[0].length > p[1].length && p[0].slice(-p[1].length) === p[1]) {
+        var rg = eja(p[0], opt);
+        if (rg.jawi !== null) return { jawi: rg.jawi + '٢', sumber: rg.sumber, terangan: ['kata ganda separa: ٢'].concat(rg.terangan) };
+      }
       if (p.length === 2 && p[0] === p[1]) {
         var r1 = eja(p[0], opt);
         return { jawi: r1.jawi === null ? null : r1.jawi + '٢', sumber: r1.sumber, terangan: ['kata ganda: ٢'].concat(r1.terangan) };

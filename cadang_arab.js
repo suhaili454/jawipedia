@@ -337,6 +337,18 @@
   function cadangTypo(w, cariAsas, opt) {
     w = String(w).toLowerCase(); if (w.length < 5 || !/^[a-z]+$/.test(w) || typeof cariAsas !== 'function') return null;
     if (cariAsas(w) || /^abd(u|ur|us|ul)?$/.test(w)) return null;   // 'abdul' bukan typo 'abdal'
+    // kata ganda separa tanpa garis (sebaikbaik -> sebaik-baik ; rumahrumah -> rumah-rumah) : dikira typo
+    for (var k = 3; k <= w.length - 3; k++) {
+      var A = w.slice(0, k), B = w.slice(k);
+      if (A.length >= B.length && A.slice(-B.length) === B && (cariAsas(A) || cariAsas(B))) {
+        var kn = A + '-' + B, jb = cariAsas(kn) || ((cariAsas(A) || '') && cariAsas(A) + '٢');
+        var jt = hukumEja(w, { cariAsas: cariAsas });
+        if (jb && jt && jb !== jt) return { n: 1, rumi: w, jenis: 'typo', kanon: kn, pilihan: [
+          { label: 'ejaan sebenar', jawi: jb, nota: 'adakah maksud anda "' + kn + '"?' },
+          { label: 'ejaan literal', jawi: jt, nota: 'ikut tulisan (' + w + ')' }
+        ] };
+      }
+    }
     var abc = 'abcdefghijklmnopqrstuvwxyz', c = {}, i, j;
     for (i = 0; i < w.length; i++) c[w.slice(0, i) + w.slice(i + 1)] = 1;                                  // buang
     for (i = 0; i < w.length - 1; i++) c[w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2)] = 1;             // tukar tempat
