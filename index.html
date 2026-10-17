@@ -117,6 +117,10 @@
                 <input type="checkbox" id="cbToggle" onchange="tukarCaraBaca(this.checked)" class="w-4 h-4 accent-teal-600">
                 <span>🎨 Cara Baca <span class="font-normal text-slate-400">(suku kata berwarna)</span></span>
             </label>
+            <div class="flex flex-wrap gap-2 mb-2">
+                <button onclick="cetak('jawi')" class="btn bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-1.5 px-3 rounded-lg text-sm">🖨️ Cetak Jawi</button>
+                <button onclick="cetak('baca')" class="btn bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold py-1.5 px-3 rounded-lg text-sm">🖨️ Cetak Cara Baca</button>
+            </div>
             <div id="jawiOutput" class="font-jawi bg-white border-2 border-slate-100 rounded-2xl w-full p-4 sm:p-6 min-h-[160px] text-slate-800 break-words shadow-sm relative leading-relaxed"></div>
             
             <div id="panduanBaca" class="hidden mt-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
@@ -499,25 +503,92 @@
             for (let i = 0; i < r.length; i++) { const s = CaraBaca.pecah(r[i], j[i]); if (!s) return null; hasil.push(s); }
             return hasil;
         }
-        function terapCaraBaca(out) {
-            document.getElementById('jawiOutput').classList.toggle('cb-on', cbHidup);
-            const panel = document.getElementById('panduanBaca'), isi = document.getElementById('panduanBacaIsi');
-            if (!cbHidup) { panel.classList.add('hidden'); isi.innerHTML = ''; return; }
+        // warnakan semua perkataan layak dalam 'root' dan pulangkan kad panduan (HTML)
+        function warnaiPada(root, had) {
             const dilihat = {}; let kad = '';
-            out.querySelectorAll('span[data-r]').forEach(sp => {
+            root.querySelectorAll('span[data-r]').forEach(sp => {
                 if (!/word-(hitam|hijau|biru|oren|ungu|kuning)/.test(sp.className) || sp.querySelector('.alt-separator')) return;
                 const rumi = sp.getAttribute('data-r'), jawi = sp.textContent.trim();
                 const kata = pecahBerwarna(rumi, jawi); if (!kata) return;
                 sp.innerHTML = kata.map(seg => seg.map(x => x.warna < 0 ? x.jawi : `<span class="cb c${x.warna}">${x.jawi}</span>`).join('')).join(' ');
                 sp.classList.add('cb-word');
                 sp.title = kata.map(seg => seg.map(x => x.rumi).filter(Boolean).join(' · ')).join('  ');
-                if (dilihat[rumi] || Object.keys(dilihat).length >= 40) return;
+                if (dilihat[rumi] || Object.keys(dilihat).length >= had) return;
                 dilihat[rumi] = 1;
                 kad += '<span class="cb-kad"><span class="font-jawi" style="font-size:1.6rem;line-height:1.6" dir="rtl">' +
                     kata.map(seg => seg.map(x => x.warna < 0 ? x.jawi : `<span class="cb c${x.warna}">${x.jawi}</span>`).join('')).join(' ') + '</span><span style="direction:ltr;display:flex;gap:4px;flex-wrap:wrap;justify-content:center">' +
                     kata.map(seg => seg.filter(x => x.warna >= 0).map(x => `<span class="cb-chip cb c${x.warna}">${x.rumi}</span>`).join('')).join('<span style="width:6px"></span>') + '</span></span>';
             });
+            return kad;
+        }
+        function terapCaraBaca(out) {
+            document.getElementById('jawiOutput').classList.toggle('cb-on', cbHidup);
+            const panel = document.getElementById('panduanBaca'), isi = document.getElementById('panduanBacaIsi');
+            if (!cbHidup) { panel.classList.add('hidden'); isi.innerHTML = ''; return; }
+            const kad = warnaiPada(out, 40);
             isi.innerHTML = kad; panel.classList.toggle('hidden', !kad);
+        }
+
+        // ---- CETAK : versi Jawi biasa & versi Cara Baca ----
+        function salinanBersih() {                                  // salinan output tanpa warna status; pilihan Pink = ejaan sebenar
+            const salin = document.getElementById('jawiOutput').cloneNode(true);
+            salin.querySelectorAll('.word-pink').forEach(pk => {
+                const op = pk.querySelector('.pink-opt'); const teks = op ? op.lastElementChild.textContent : pk.textContent;
+                pk.replaceWith(document.createTextNode(teks));
+            });
+            salin.querySelectorAll('.cb').forEach(c => c.replaceWith(document.createTextNode(c.textContent)));   // buang warna Cara Baca lama jika ada
+            salin.querySelectorAll('span[class^="word-"], span[class*=" word-"]').forEach(sp => { sp.removeAttribute('class'); sp.removeAttribute('onclick'); sp.removeAttribute('title'); });
+            return salin;
+        }
+        function cetak(mod) {
+            const rumi = document.getElementById('rumiInput').value.trim();
+            if (!rumi || !document.getElementById('jawiOutput').textContent.trim()) { alert('Tiada teks untuk dicetak. Taip ayat Rumi dahulu.'); return; }
+            const asal = document.getElementById('jawiOutput').cloneNode(true);
+            let isiJawi, panduan = '', tajuk;
+            if (mod === 'baca') {
+                const salin = salinanBersih(), rumiHtml = document.getElementById('jawiOutput');
+                // bina semula dengan data-r : guna output asal untuk padanan, tetapi tanpa warna status
+                const tmp = asal; tmp.querySelectorAll('.word-pink').forEach(pk => { const op = pk.querySelector('.pink-opt'); pk.replaceWith(document.createTextNode(op ? op.lastElementChild.textContent : pk.textContent)); });
+                tmp.querySelectorAll('.cb').forEach(c => c.replaceWith(document.createTextNode(c.textContent)));
+                const kad = warnaiPada(tmp, 200);
+                tmp.querySelectorAll('span[data-r]').forEach(sp => { sp.removeAttribute('onclick'); sp.removeAttribute('title'); sp.className = ''; });
+                isiJawi = tmp.innerHTML; panduan = kad; tajuk = 'Cara Baca (suku kata berwarna)';
+            } else {
+                isiJawi = salinanBersih().innerHTML; tajuk = 'Jawi';
+            }
+            const tarikh = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+            const html = `<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>JawiPedia - ${tajuk}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 16mm; }
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
+body { font-family: 'Poppins', Arial, sans-serif; color: #0f172a; margin: 0; }
+h1 { font-size: 15pt; margin: 0 0 2px; } .meta { font-size: 9pt; color: #64748b; margin-bottom: 14px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
+h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: .06em; color: #475569; margin: 16px 0 6px; }
+.rumi { font-size: 12pt; line-height: 1.7; white-space: pre-wrap; }
+.jawi { font-family: 'Noto Naskh Arabic', 'Traditional Arabic', serif; direction: rtl; text-align: right; font-size: 22pt; line-height: 2.3; }
+.jawi span { font-weight: 700; }
+.cb.c0 { color:#2563eb } .cb.c1 { color:#16a34a } .cb.c2 { color:#ea580c } .cb.c3 { color:#9333ea } .cb.c4 { color:#e11d48 } .cb.c5 { color:#0891b2 }
+.cb-kad { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 6px 10px; margin: 3px; break-inside: avoid; }
+.cb-kad .font-jawi { font-family: 'Noto Naskh Arabic', serif; font-size: 18pt; line-height: 1.6; }
+.cb-chip { display: inline-block; font: 700 8pt 'Poppins', sans-serif; padding: 3px 7px; border-radius: 999px; border: 1px solid currentColor; text-transform: uppercase; direction: ltr; }
+.panduan { direction: rtl; }
+.kaki { margin-top: 18px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #94a3b8; text-align: center; }
+</style></head><body>
+<h1>JawiPedia : ${tajuk}</h1><div class="meta">Rumi ke Jawi, dicetak pada ${tarikh}</div>
+<h2>Rumi</h2><div class="rumi">${rumi.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</div>
+<h2>Jawi</h2><div class="jawi">${isiJawi}</div>
+${panduan ? '<h2>Panduan bacaan (satu warna = satu suku kata)</h2><div class="panduan">' + panduan + '</div>' : ''}
+<div class="kaki">jawipedia.netlify.app · Dibina untuk komuniti pencinta Jawi oleh Ahmad Suhaili Hassan, sambungan kamus asal Mohd Zamri Murah (goodmami/rumi-jawi).<br>Ejaan Arab/nama perlu disemak ustaz atau pakar Jawi.</div>
+</body></html>`;
+            const lama = document.getElementById('cetakFrame'); if (lama) lama.remove();
+            const fr = document.createElement('iframe'); fr.id = 'cetakFrame';
+            fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+            document.body.appendChild(fr);
+            const d = fr.contentWindow.document; d.open(); d.write(html); d.close();
+            const mula = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); w.onload = () => w.print(); } } };
+            const tunggu = (fr.contentWindow.document.fonts && fr.contentWindow.document.fonts.ready) ? fr.contentWindow.document.fonts.ready : Promise.resolve();
+            Promise.race([tunggu, new Promise(r => setTimeout(r, 1500))]).then(() => setTimeout(mula, 150));
         }
 
         // ---- calon ejaan bagi satu perkataan 'pending' : utama + cadangan lain (alts) ----

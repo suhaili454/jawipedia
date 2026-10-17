@@ -50,6 +50,13 @@ Tekan **Cadangan Komuniti (N)** untuk melihat semua ejaan yang sedang menunggu u
 ### 🎨 Cara Baca (belajar membaca Jawi)
 Tandakan **Cara Baca** di atas kotak Jawi. Setiap perkataan Jawi dipecah mengikut **suku kata** dan setiap suku diberi **warna** berbeza. Di bawahnya ada **Panduan bacaan** yang memadankan warna dengan suku kata Rumi, contohnya ارنب → **AR** (biru) + **NAB** (hijau). Sentuh atau tuding pada perkataan untuk melihat suku katanya. Klik perkataan masih berfungsi seperti biasa. Pilihan anda diingat oleh pelayar. Perkataan yang tak dapat dipadankan (cth. frasa Arab seperti masjidil haram) kekal tanpa warna.
 
+### 🖨️ Cetak
+Dua butang di atas kotak Jawi:
+- **Cetak Jawi** : cetak teks Rumi dan Jawi (tanpa warna status), sesuai untuk nota atau latihan.
+- **Cetak Cara Baca** : cetak Jawi berwarna mengikut suku kata, berserta **Panduan bacaan** (kad suku kata Rumi).
+
+Dialog cetak pelayar akan terbuka. Pilih **Save as PDF** jika mahu fail PDF. Kertas A4, warna dikekalkan (hidupkan "Background graphics" jika warna tak keluar). Perkataan Pink dicetak dengan pilihan pertama.
+
 ### Statistik masa nyata
 Panel di bawah halaman: penukaran Rumi→Jawi, perkataan ditukar, pengguna, pengguna dalam talian, perkataan ditambah, pembetulan, undian, ejaan disahkan dan yang menunggu undian.
 
