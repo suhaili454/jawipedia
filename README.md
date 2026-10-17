@@ -47,6 +47,9 @@ Tekan **Cadangan Komuniti (N)** untuk melihat semua ejaan yang sedang menunggu u
 - Anda **tidak boleh** mengundi ejaan yang anda cadangkan sendiri. Jika anda cadang ejaan lain, anda dikira sudah menggunakan suara anda bagi perkataan itu.
 - **➕ Cadang ejaan lain**: jika tidak setuju dengan ejaan yang sedang diundi, hantar ejaan anda. Ia muncul **di bawah** ejaan lama dan boleh diundi bersama. Ejaan yang sampai 5 undi dahulu menang dan yang lain dibuang. Maksimum 5 cadangan lain bagi satu perkataan.
 
+### 🎨 Cara Baca (belajar membaca Jawi)
+Tandakan **Cara Baca** di atas kotak Jawi. Setiap perkataan Jawi dipecah mengikut **suku kata** dan setiap suku diberi **warna** berbeza. Di bawahnya ada **Panduan bacaan** yang memadankan warna dengan suku kata Rumi, contohnya ارنب → **AR** (biru) + **NAB** (hijau). Sentuh atau tuding pada perkataan untuk melihat suku katanya. Klik perkataan masih berfungsi seperti biasa. Pilihan anda diingat oleh pelayar. Perkataan yang tak dapat dipadankan (cth. frasa Arab seperti masjidil haram) kekal tanpa warna.
+
 ### Statistik masa nyata
 Panel di bawah halaman: penukaran Rumi→Jawi, perkataan ditukar, pengguna, pengguna dalam talian, perkataan ditambah, pembetulan, undian, ejaan disahkan dan yang menunggu undian.
 
@@ -81,6 +84,7 @@ Hijau (disahkan) → Biru/Oren/Ungu (sedang diundi, ejaan undi tertinggi) → Ka
 | `hukum_jawi.js` | Semua hukum Jawi dalam satu config |
 | `enjin_jawi.js` | Enjin Rumi → Jawi |
 | `cadang_arab.js` | Cadangan Pink: nama Arab, singkatan, typo, idafah |
+| `cara_baca.js` | Cara Baca: pecah Jawi ikut suku kata berwarna |
 | `firebase_rules_baru.json` | Peraturan Firebase Realtime Database |
 
 ---

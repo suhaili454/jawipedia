@@ -57,6 +57,11 @@
         .stat-nilai { font:700 1.35rem/1.2 'Poppins',sans-serif; color:#0f766e; font-variant-numeric:tabular-nums; }
         .stat-label { font:500 .68rem/1.25 'Poppins',sans-serif; color:#64748b; margin-top:2px; }
         @media (min-width:640px){ .stat-nilai{font-size:1.6rem} .stat-label{font-size:.75rem} }
+        /* CARA BACA : suku kata Jawi berwarna (belajar membaca) */
+        .cb.c0 { color:#2563eb } .cb.c1 { color:#16a34a } .cb.c2 { color:#ea580c } .cb.c3 { color:#9333ea } .cb.c4 { color:#e11d48 } .cb.c5 { color:#0891b2 }
+        .cb-on .cb-word { background:none !important; border-bottom:2px solid #e2e8f0 !important; font-weight:700 }
+        .cb-chip { display:inline-block; font:700 .8rem/1 'Poppins',sans-serif; padding:5px 9px; border-radius:999px; background:#f8fafc; border:1px solid currentColor; text-transform:uppercase; letter-spacing:.03em; direction:ltr }
+        .cb-kad { display:inline-flex; flex-direction:column; align-items:center; gap:6px; background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:8px 12px; margin:4px }
         .word-pink { color: #db2777; font-weight: 700; border-bottom: 2px dashed #f9a8d4; }
         .pink-opt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: bottom; padding: 0 3px; border-radius: 8px; cursor: pointer; transition: background .15s; }
         .pink-opt:hover { background-color: #fdf2f8; }
@@ -108,8 +113,17 @@
         </div>
 
         <div class="mb-4 relative z-10">
+            <label class="flex items-center gap-2 mb-2 cursor-pointer select-none text-sm font-semibold text-slate-600" style="width:fit-content">
+                <input type="checkbox" id="cbToggle" onchange="tukarCaraBaca(this.checked)" class="w-4 h-4 accent-teal-600">
+                <span>🎨 Cara Baca <span class="font-normal text-slate-400">(suku kata berwarna)</span></span>
+            </label>
             <div id="jawiOutput" class="font-jawi bg-white border-2 border-slate-100 rounded-2xl w-full p-4 sm:p-6 min-h-[160px] text-slate-800 break-words shadow-sm relative leading-relaxed"></div>
             
+            <div id="panduanBaca" class="hidden mt-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div class="text-xs font-semibold text-slate-500 mb-1">Panduan bacaan : setiap warna ialah satu suku kata</div>
+                <div id="panduanBacaIsi" class="flex flex-wrap" style="direction:rtl"></div>
+            </div>
+
             <!-- TOOLTIP TINDAKAN -->
             <div id="actionTooltip" class="hidden absolute bg-slate-800 text-white text-xs sm:text-sm font-semibold p-2.5 rounded-xl shadow-xl flex items-center gap-2 z-30 transition-all duration-150 transform -translate-x-1/2 mt-2">
                 <span class="text-slate-300 border-r border-slate-600 pr-2 mr-1" id="tooltipWord">""</span>
@@ -237,6 +251,7 @@
     <script src="hukum_jawi.js"></script>
     <script src="enjin_jawi.js"></script>
     <script src="cadang_arab.js"></script>
+    <script src="cara_baca.js"></script>
 
     <script>
         // 1. SETUP FIREBASE
@@ -269,6 +284,7 @@
             })(mula);
         }
         let _stat = {};
+        window.addEventListener('DOMContentLoaded', () => { const c = document.getElementById('cbToggle'); if (c) c.checked = cbHidup; });
         function paparStatistik() {
             _animNo('stPenukaran', _stat.penukaran || 0); _animNo('stPerkataan', _stat.perkataan || 0); _animNo('stPengguna', _stat.pengguna || 0);
             _animNo('stTambahan', _stat.tambahan || 0); _animNo('stPembetulan', _stat.pembetulan || 0); _animNo('stUndian', _stat.undian || 0);
@@ -351,7 +367,7 @@
         // 2. ENJIN N-GRAM & SHORTFORM
         function prosesRumiKeJawi() {
             const text = document.getElementById('rumiInput').value;
-            if (!text.trim()) { const o = document.getElementById('jawiOutput'); o.innerHTML = ''; o.dataset.html = ''; return; }
+            if (!text.trim()) { const o = document.getElementById('jawiOutput'); o.innerHTML = ''; o.dataset.html = ''; terapCaraBaca(o); return; }
 
             // Memisahkan perkataan tetapi mengekalkan ruang/tanda baca
             const tokens = text.replace(/[\u2019\u2018\u02BC\u02BB\u02BF`\u00B4]/g, "'").split(/([Aa]\/[LlPp](?![a-zA-Z])|[Yy]\.\s?Bhg(?![a-zA-Z])\.?|[a-zA-Z0-9\-']+)/);
@@ -463,7 +479,45 @@
             }
             const htmlBaru = hasil.join('');
             const out = document.getElementById('jawiOutput');
-            if (out.dataset.html !== htmlBaru) { out.innerHTML = htmlBaru; out.dataset.html = htmlBaru; }   // jangan bina semula jika tiada perubahan (elak elemen diganti ketika diklik)
+            if (out.dataset.html !== htmlBaru) { out.innerHTML = htmlBaru; out.dataset.html = htmlBaru; terapCaraBaca(out); }   // jangan bina semula jika tiada perubahan (elak elemen diganti ketika diklik)
+        }
+
+        // ---- CARA BACA : warnakan suku kata Jawi ----
+        let cbHidup = false;
+        try { cbHidup = localStorage.getItem('jawi_cb') === '1'; } catch (e) {}
+        function tukarCaraBaca(on) {
+            cbHidup = !!on;
+            try { localStorage.setItem('jawi_cb', on ? '1' : '0'); } catch (e) {}
+            const o = document.getElementById('jawiOutput'); o.dataset.html = '';
+            prosesRumiKeJawi();
+        }
+        function pecahBerwarna(rumi, jawi) {                       // satu perkataan atau frasa (patah sama banyak)
+            if (typeof CaraBaca === 'undefined') return null;
+            const r = rumi.split(' '), j = jawi.split(' ');
+            if (r.length !== j.length) return null;
+            const hasil = [];
+            for (let i = 0; i < r.length; i++) { const s = CaraBaca.pecah(r[i], j[i]); if (!s) return null; hasil.push(s); }
+            return hasil;
+        }
+        function terapCaraBaca(out) {
+            document.getElementById('jawiOutput').classList.toggle('cb-on', cbHidup);
+            const panel = document.getElementById('panduanBaca'), isi = document.getElementById('panduanBacaIsi');
+            if (!cbHidup) { panel.classList.add('hidden'); isi.innerHTML = ''; return; }
+            const dilihat = {}; let kad = '';
+            out.querySelectorAll('span[data-r]').forEach(sp => {
+                if (!/word-(hitam|hijau|biru|oren|ungu|kuning)/.test(sp.className) || sp.querySelector('.alt-separator')) return;
+                const rumi = sp.getAttribute('data-r'), jawi = sp.textContent.trim();
+                const kata = pecahBerwarna(rumi, jawi); if (!kata) return;
+                sp.innerHTML = kata.map(seg => seg.map(x => x.warna < 0 ? x.jawi : `<span class="cb c${x.warna}">${x.jawi}</span>`).join('')).join(' ');
+                sp.classList.add('cb-word');
+                sp.title = kata.map(seg => seg.map(x => x.rumi).filter(Boolean).join(' · ')).join('  ');
+                if (dilihat[rumi] || Object.keys(dilihat).length >= 40) return;
+                dilihat[rumi] = 1;
+                kad += '<span class="cb-kad"><span class="font-jawi" style="font-size:1.6rem;line-height:1.6" dir="rtl">' +
+                    kata.map(seg => seg.map(x => x.warna < 0 ? x.jawi : `<span class="cb c${x.warna}">${x.jawi}</span>`).join('')).join(' ') + '</span><span style="direction:ltr;display:flex;gap:4px;flex-wrap:wrap;justify-content:center">' +
+                    kata.map(seg => seg.filter(x => x.warna >= 0).map(x => `<span class="cb-chip cb c${x.warna}">${x.rumi}</span>`).join('')).join('<span style="width:6px"></span>') + '</span></span>';
+            });
+            isi.innerHTML = kad; panel.classList.toggle('hidden', !kad);
         }
 
         // ---- calon ejaan bagi satu perkataan 'pending' : utama + cadangan lain (alts) ----
